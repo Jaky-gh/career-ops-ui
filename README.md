@@ -8,13 +8,40 @@ A small local control panel for a `career-ops` checkout.
 node server.mjs
 ```
 
-By default the app looks for `../career-ops` from this project directory. To point at another checkout:
+Settings load from built-in defaults, then `settings.json`, then `settings.local.json` if it exists. Environment variables override file settings.
+
+By default the app looks for `../career-ops` from this project directory. For your machine, copy the local settings template and point it at your checkout:
+
+```bash
+cp settings.local.example.json settings.local.json
+```
+
+Then edit `settings.local.json`:
+
+```json
+{
+  "careerOpsPath": "/path/to/career-ops"
+}
+```
+
+For a one-off run, you can still use:
 
 ```bash
 CAREER_OPS_PATH=/path/to/career-ops node server.mjs
 ```
 
 Then open the URL printed by the server.
+
+## Settings
+
+`settings.json` configures:
+
+- `port`: local UI port
+- `careerOpsPath`: path to the `career-ops` checkout, relative to this UI project or absolute
+- `requiredFiles`: files checked by the workspace health panel
+- `actions`: commands exposed in the Commands tab
+
+`settings.local.json` is ignored by git so personal paths can stay local.
 
 ## What It Does
 
