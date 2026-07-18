@@ -834,12 +834,13 @@ async function handleApi(req, res) {
       const id = url.pathname.split("/")[3];
       const job = jobs.get(id);
       if (!job) return sendText(res, 404, "Job not found");
-      if (job.child) {
-        job.child.kill();
-        job.status = "cancelled";
-        job.updatedAt = new Date().toISOString();
-        await persistJobs();
+      if (job.status !== "running" || !job.child) {
+        return sendText(res, 409, "Command is not running.");
       }
+      job.child.kill();
+      job.status = "cancelled";
+      job.updatedAt = new Date().toISOString();
+      await persistJobs();
       return sendJson(res, 200, { ...job, child: undefined });
     }
 

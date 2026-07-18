@@ -333,7 +333,7 @@ export function renderJobsList(jobs) {
         <div class="job-actions">
           <button class="secondary-button" data-view-job-log="${escapeHtml(job.id)}">View Log</button>
           <button class="secondary-button" data-copy-job-log="${escapeHtml(job.id)}">Copy Log</button>
-          <button class="secondary-button" data-cancel="${escapeHtml(job.id)}" ${job.status === "running" ? "" : "disabled"}>Cancel</button>
+          ${job.status === "running" ? `<button class="secondary-button" data-cancel="${escapeHtml(job.id)}">Cancel</button>` : ""}
         </div>
       </div>
       ${renderJobProgress(job)}
