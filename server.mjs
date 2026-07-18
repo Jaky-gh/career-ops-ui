@@ -581,7 +581,8 @@ function startProcessJob(actionId, action, cwd = CAREER_OPS_ROOT) {
   const child = spawn(cmd, args, {
     cwd,
     env: process.env,
-    shell: false
+    shell: false,
+    stdio: ["ignore", "pipe", "pipe"]
   });
   job.child = child;
 
