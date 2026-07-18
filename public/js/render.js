@@ -5,6 +5,8 @@ import {
   dateSortValue,
   escapeHtml,
   formatDate,
+  formatDateTime,
+  formatDuration,
   formatScore,
   jobStatusClass,
   scoreClass,
@@ -189,18 +191,27 @@ export function renderDetail() {
   els.reportPreview.classList.add("hidden");
 }
 
-export function renderCommands() {
-  if (!state.health) return;
-  const details = state.health.actionDetails || {};
-  els.commandGrid.innerHTML = Object.entries(state.health.actions).map(([action, label]) => {
-    const detail = details[action] || {};
-    return `
+const primaryCommandOrder = ["scan", "grade", "merge"];
+const maintenanceCommandOrder = ["doctor", "verify", "liveness", "dedup", "normalize"];
+
+function commandSortValue(action) {
+  const primaryIndex = primaryCommandOrder.indexOf(action);
+  if (primaryIndex >= 0) return primaryIndex;
+  const maintenanceIndex = maintenanceCommandOrder.indexOf(action);
+  if (maintenanceIndex >= 0) return 100 + maintenanceIndex;
+  return 200;
+}
+
+function renderCommandCard(action, label, detail = {}) {
+  return `
     <div class="command-card">
       <div>
-        <strong>${escapeHtml(detail.label || label)}</strong>
+        <div class="command-card-topline">
+          <strong>${escapeHtml(detail.label || label)}</strong>
+          <span class="eyebrow">${escapeHtml(action)}</span>
+        </div>
         <p>${escapeHtml(detail.description || "Run this career-ops command.")}</p>
       </div>
-      <span class="eyebrow">${escapeHtml(action)}</span>
       <dl class="command-docs">
         <div><dt>When</dt><dd>${escapeHtml(detail.when || "Use when this step is needed.")}</dd></div>
         <div><dt>Effect</dt><dd>${escapeHtml(detail.effect || "See command output for details.")}</dd></div>
@@ -210,7 +221,40 @@ export function renderCommands() {
       </div>
     </div>
   `;
-  }).join("");
+}
+
+export function renderCommands() {
+  if (!state.health) return;
+  const details = state.health.actionDetails || {};
+  const commands = Object.entries(state.health.actions)
+    .sort(([actionA], [actionB]) => commandSortValue(actionA) - commandSortValue(actionB) || actionA.localeCompare(actionB));
+  const primary = commands.filter(([action]) => primaryCommandOrder.includes(action));
+  const maintenance = commands.filter(([action]) => !primaryCommandOrder.includes(action));
+
+  els.commandGrid.innerHTML = `
+    <section class="command-group">
+      <div class="section-head compact">
+        <div>
+          <h2>Workflow Commands</h2>
+          <p>Run these in order for the normal job-search loop.</p>
+        </div>
+      </div>
+      <div class="command-grid-inner">
+        ${primary.map(([action, label]) => renderCommandCard(action, label, details[action])).join("")}
+      </div>
+    </section>
+    <section class="command-group">
+      <div class="section-head compact">
+        <div>
+          <h2>Maintenance</h2>
+          <p>Use these when data needs checking or cleanup.</p>
+        </div>
+      </div>
+      <div class="command-grid-inner maintenance-grid">
+        ${maintenance.map(([action, label]) => renderCommandCard(action, label, details[action])).join("")}
+      </div>
+    </section>
+  `;
 }
 
 export function renderJobProgress(job) {
@@ -230,6 +274,17 @@ export function renderJobProgress(job) {
       <div class="job-progress-label">${escapeHtml(progress.label || "Working through queue")}</div>
     </div>
   `;
+}
+
+function renderJobTimeline(job) {
+  const finishedAt = job.status === "running" ? new Date().toISOString() : job.updatedAt;
+  const duration = formatDuration(job.startedAt, finishedAt);
+  return [
+    `Started ${formatDateTime(job.startedAt)}`,
+    job.updatedAt ? `Updated ${formatDateTime(job.updatedAt)}` : "",
+    duration ? `Duration ${duration}` : "",
+    `Exit ${job.exitCode ?? "pending"}`
+  ].filter(Boolean).join(" / ");
 }
 
 export function renderLatestLog(jobs) {
@@ -254,7 +309,7 @@ export function renderLatestLog(jobs) {
       ${escapeHtml(latestJob.status || "unknown")}
     </span>
   `;
-  els.latestLogMeta.textContent = `exit ${latestJob.exitCode ?? "pending"} / ${latestJob.command || "command unavailable"}`;
+  els.latestLogMeta.textContent = renderJobTimeline(latestJob);
   els.latestLogBody.textContent = latestJob.logs || "Waiting for command output...";
   els.latestLogPanel.dataset.jobId = latestJob.id;
 }
@@ -273,7 +328,7 @@ export function renderJobsList(jobs) {
               ${escapeHtml(job.status)}
             </span>
           </div>
-          <div class="eyebrow">exit ${job.exitCode ?? "pending"}</div>
+          <div class="job-time-row">${escapeHtml(renderJobTimeline(job))}</div>
         </div>
         <div class="job-actions">
           <button class="secondary-button" data-view-job-log="${escapeHtml(job.id)}">View Log</button>
@@ -294,7 +349,7 @@ export function renderLogModal(job) {
       ${escapeHtml(job.status || "unknown")}
     </span>
   `;
-  els.logModalMeta.textContent = `exit ${job.exitCode ?? "pending"} / ${job.command || "command unavailable"}`;
+  els.logModalMeta.textContent = `${renderJobTimeline(job)} / ${job.command || "command unavailable"}`;
   els.logModalBody.textContent = job.logs || "Waiting for command output...";
   els.logModal.dataset.jobId = job.id;
   els.logModal.classList.remove("hidden");

@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { createReadStream, existsSync, promises as fs } from "node:fs";
+import { createReadStream, existsSync, promises as fs, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -191,6 +191,14 @@ async function readBody(req) {
 async function readTextIfExists(filePath) {
   try {
     return await fs.readFile(filePath, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function readTextSyncIfExists(filePath) {
+  try {
+    return readFileSync(filePath, "utf8");
   } catch {
     return "";
   }
@@ -407,6 +415,14 @@ function parsePipelineCheckboxes(markdown) {
   return pending;
 }
 
+function countPipelineRows() {
+  const markdown = readTextSyncIfExists(path.join(CAREER_OPS_ROOT, "data", "pipeline.md"));
+  return {
+    pending: parsePipelineCheckboxes(markdown).length,
+    total: [...markdown.matchAll(/^\s*-\s+\[[ xX!]\]\s+/gm)].length
+  };
+}
+
 function hasPipelineTaskRows(markdown) {
   return /^\s*-\s+\[[ xX!]\]\s+/m.test(markdown);
 }
@@ -590,9 +606,37 @@ function updateJobProgressFromLog(job, text) {
   }
 }
 
+function updateGradeProgressFromPipeline(job) {
+  if (job.action !== "grade") return;
+  const rows = countPipelineRows();
+  const remaining = rows.pending;
+  if (!job.progress?.total) {
+    const total = remaining || rows.total;
+    job.progress = {
+      current: total && !remaining ? total : 0,
+      total,
+      label: remaining ? "Preparing grading run" : total ? "Pipeline grading complete" : "No pending jobs to grade"
+    };
+  }
+
+  if (!job.progress.total) return;
+
+  const current = Math.max(job.progress.current || 0, job.progress.total - remaining);
+  job.progress = {
+    ...job.progress,
+    current,
+    label: remaining
+      ? job.progress.label || "Grading pipeline jobs"
+      : job.status === "running"
+        ? "Finalizing grading run"
+        : "Pipeline grading complete"
+  };
+}
+
 function appendLog(job, text) {
   job.logs += text;
   updateJobProgressFromLog(job, text);
+  updateGradeProgressFromPipeline(job);
   job.updatedAt = new Date().toISOString();
   void persistJobs();
 }
@@ -613,6 +657,14 @@ function startProcessJob(actionId, action, cwd = CAREER_OPS_ROOT) {
     updatedAt: new Date().toISOString(),
     exitCode: null
   };
+  if (actionId === "grade") {
+    const total = countPipelineRows().pending;
+    job.progress = {
+      current: 0,
+      total,
+      label: total ? "Preparing grading run" : "No pending jobs to grade"
+    };
+  }
   jobs.set(id, job);
   void persistJobs();
 
@@ -773,6 +825,7 @@ async function handleApi(req, res) {
     }
 
     if (req.method === "GET" && url.pathname === "/api/jobs") {
+      for (const job of jobs.values()) updateGradeProgressFromPipeline(job);
       const list = Array.from(jobs.values()).map((job) => ({ ...job, child: undefined }));
       return sendJson(res, 200, { jobs: list.reverse() });
     }
