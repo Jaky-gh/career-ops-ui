@@ -192,6 +192,18 @@ function serializeJob(job) {
   return safeJob;
 }
 
+function hasFatalCommandOutput(job) {
+  const logs = job.logs || "";
+  const hasSavedReport = /Report saved:/i.test(logs);
+  const openRouterBlocked = /OPENROUTER_API_KEY not found|Insufficient credits|All\s+\d+\s+active models failed/i.test(logs);
+  return job.action === "grade" && openRouterBlocked && !hasSavedReport;
+}
+
+function inferFinishedStatus(job, exitCode = job.exitCode) {
+  if (exitCode !== 0) return "failed";
+  return hasFatalCommandOutput(job) ? "failed" : "succeeded";
+}
+
 async function loadPersistedJobs() {
   const saved = await loadJsonIfExists(JOBS_STATE_FILE);
   if (!saved?.jobs?.length) return;
@@ -202,6 +214,9 @@ async function loadPersistedJobs() {
       status: savedJob.status === "running" ? "interrupted" : savedJob.status
     };
     if (job.logs) updateJobProgressFromLog(job, job.logs);
+    if (job.status === "succeeded" || job.status === "failed") {
+      job.status = inferFinishedStatus(job);
+    }
     jobs.set(job.id, job);
     nextJobId = Math.max(nextJobId, Number(job.id) + 1);
   }
@@ -595,10 +610,10 @@ function startProcessJob(actionId, action, cwd = CAREER_OPS_ROOT) {
   });
   child.on("close", (code) => {
     job.exitCode = code;
-    job.status = code === 0 ? "succeeded" : "failed";
+    job.status = inferFinishedStatus(job, code);
     job.updatedAt = new Date().toISOString();
     delete job.child;
-    if (code === 0 && job.progress?.total) {
+    if (job.status === "succeeded" && job.progress?.total) {
       job.progress = {
         ...job.progress,
         current: job.progress.total
