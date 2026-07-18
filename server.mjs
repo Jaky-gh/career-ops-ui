@@ -137,6 +137,8 @@ function normalizeCommand(command) {
 const settings = await loadSettings();
 const PORT = Number(settings.port || 5177);
 const CAREER_OPS_ROOT = resolveFromProject(settings.careerOpsPath);
+const CODEX_COMMAND = process.env.CODEX_BIN
+  || (existsSync("/Applications/Codex.app/Contents/Resources/codex") ? "/Applications/Codex.app/Contents/Resources/codex" : "codex");
 const ACTIONS = Object.fromEntries(Object.entries(settings.actions || {}).map(([id, action]) => [
   id,
   {
@@ -557,9 +559,7 @@ function appendLog(job, text) {
   void persistJobs();
 }
 
-function startJob(actionId) {
-  const action = ACTIONS[actionId];
-  if (!action) throw new Error(`Unknown action: ${actionId}`);
+function startProcessJob(actionId, action, cwd = CAREER_OPS_ROOT) {
   if (!existsSync(CAREER_OPS_ROOT)) throw new Error(`career-ops root not found: ${CAREER_OPS_ROOT}`);
 
   const [cmd, args] = action.command;
@@ -579,7 +579,7 @@ function startJob(actionId) {
   void persistJobs();
 
   const child = spawn(cmd, args, {
-    cwd: CAREER_OPS_ROOT,
+    cwd,
     env: process.env,
     shell: false
   });
@@ -607,6 +607,37 @@ function startJob(actionId) {
   });
 
   return job;
+}
+
+function startJob(actionId) {
+  const action = ACTIONS[actionId];
+  if (!action) throw new Error(`Unknown action: ${actionId}`);
+  return startProcessJob(actionId, action);
+}
+
+async function startTailorResumeJob(trackerNum) {
+  const applications = await parseApplications();
+  const application = applications.find((item) => item.trackerNum === String(trackerNum));
+  if (!application) throw new Error(`Application #${trackerNum} not found.`);
+  if (!application.reportFile) throw new Error(`Application #${trackerNum} does not have a linked report yet.`);
+
+  const reportNum = application.reportFile.match(/^(\d+)/)?.[1];
+  if (!reportNum) throw new Error(`Could not read report number from ${application.reportFile}.`);
+
+  const prompt = [
+    `Run career-ops pdf mode for report ${reportNum}.`,
+    `Tailor the ATS-optimized resume/CV for ${application.company} - ${application.role}.`,
+    "Use cv.md and the linked evaluation report as source of truth.",
+    `Generate the PDF in output/ and record it against report ${reportNum}.`
+  ].join(" ");
+
+  return startProcessJob("tailor-resume", {
+    label: `Tailor Resume: ${application.company}`,
+    command: normalizeCommand([CODEX_COMMAND, "exec", prompt]),
+    description: "Generates a tailored ATS resume/CV PDF for a specific evaluated job.",
+    when: "Run from an apply-ready job before submitting the application.",
+    effect: "Writes an output/cv-*.pdf file and records it in data/pdf-index.tsv."
+  });
 }
 
 async function addPipelineUrl(url) {
@@ -731,6 +762,12 @@ async function handleApi(req, res) {
       const body = await readBody(req);
       await updateApplicationStatus(id, body.status);
       return sendJson(res, 200, { ok: true });
+    }
+
+    if (req.method === "POST" && url.pathname.match(/^\/api\/applications\/[^/]+\/tailor-resume$/)) {
+      const id = decodeURIComponent(url.pathname.split("/")[3]);
+      const job = await startTailorResumeJob(id);
+      return sendJson(res, 202, { ...job, child: undefined });
     }
 
     if (req.method === "POST" && url.pathname === "/api/open") {

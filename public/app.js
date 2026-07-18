@@ -213,7 +213,9 @@ function renderWorkflow() {
       </div>
       <div class="row-actions">
         <button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button>
+        <button data-tailor-resume="${escapeHtml(item.trackerNum || "")}" ${item.trackerNum && item.reportFile ? "" : "disabled"}>Tailor Resume</button>
         <button data-mark-applied="${escapeHtml(item.trackerNum || "")}" ${item.trackerNum ? "" : "disabled"}>Applied</button>
+        <button data-skip-job="${escapeHtml(item.trackerNum || "")}" ${item.trackerNum ? "" : "disabled"}>Skip</button>
       </div>
     </article>
   `).join("") : '<div class="empty-state">No 4.0+ unapplied jobs yet. Fetch jobs, grade the pipeline, then add graded jobs to history.</div>';
@@ -453,6 +455,24 @@ async function markApplied(trackerNum) {
   await loadData();
 }
 
+async function skipJob(trackerNum) {
+  if (!trackerNum) return;
+  await api(`/api/applications/${encodeURIComponent(trackerNum)}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status: "Skip" })
+  });
+  toast("Job removed from apply-ready list");
+  await loadData();
+}
+
+async function tailorResume(trackerNum) {
+  if (!trackerNum) return;
+  const job = await api(`/api/applications/${encodeURIComponent(trackerNum)}/tailor-resume`, { method: "POST" });
+  toast(`${job.label} started`);
+  showView("commands");
+  await renderJobs();
+}
+
 document.addEventListener("click", async (event) => {
   const row = event.target.closest("[data-id]");
   if (row && !event.target.matches("button")) {
@@ -474,6 +494,12 @@ document.addEventListener("click", async (event) => {
 
   const markAppliedId = event.target.dataset.markApplied;
   if (markAppliedId) markApplied(markAppliedId).catch((error) => toast(error.message));
+
+  const skipJobId = event.target.dataset.skipJob;
+  if (skipJobId) skipJob(skipJobId).catch((error) => toast(error.message));
+
+  const tailorResumeId = event.target.dataset.tailorResume;
+  if (tailorResumeId) tailorResume(tailorResumeId).catch((error) => toast(error.message));
 
   if (event.target.dataset.showReady) {
     showView("applications");
