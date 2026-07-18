@@ -634,7 +634,7 @@ async function startTailorResumeJob(trackerNum) {
 
   return startProcessJob("tailor-resume", {
     label: `Tailor Resume: ${application.company}`,
-    command: normalizeCommand([CODEX_COMMAND, "exec", prompt]),
+    command: normalizeCommand([CODEX_COMMAND, "exec", "--sandbox", "danger-full-access", "--cd", CAREER_OPS_ROOT, prompt]),
     description: "Generates a tailored ATS resume/CV PDF for a specific evaluated job.",
     when: "Run from an apply-ready job before submitting the application.",
     effect: "Writes an output/cv-*.pdf file and records it in data/pdf-index.tsv."
