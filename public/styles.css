@@ -733,20 +733,16 @@ dd {
 }
 
 .latest-log-panel {
-  position: sticky;
-  bottom: 0;
-  z-index: 4;
   overflow: hidden;
-  margin-bottom: 18px;
-  border: 1px solid rgba(20, 108, 90, 0.32);
+  margin-top: 18px;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
-  box-shadow: 0 -12px 32px rgba(21, 31, 25, 0.1);
+  box-shadow: var(--shadow);
 }
 
 .latest-log-panel.empty {
   border-color: var(--line);
-  box-shadow: var(--shadow);
 }
 
 .latest-log-head {
@@ -779,11 +775,11 @@ dd {
 }
 
 .latest-log-body {
-  max-height: min(34vh, 360px);
-  min-height: 190px;
+  max-height: 420px;
+  min-height: 240px;
   overflow: auto;
   margin: 0;
-  padding: 14px;
+  padding: 16px;
   background: #101817;
   color: #e7f2eb;
   font-size: 12px;

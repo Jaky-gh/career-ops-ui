@@ -239,7 +239,7 @@ export function renderLatestLog(jobs) {
   els.latestLogCopyButton.disabled = !latestJob;
 
   if (!latestJob) {
-    els.latestLogTitle.textContent = "Latest Output";
+    els.latestLogTitle.textContent = "Latest Command Output";
     els.latestLogStatus.textContent = "";
     els.latestLogMeta.textContent = "No command has run yet";
     els.latestLogBody.textContent = "Run a command to see its output here.";

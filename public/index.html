@@ -253,11 +253,18 @@
             </div>
           </div>
           <div id="commandGrid" class="command-grid"></div>
+          <section class="jobs-panel">
+            <div class="section-head compact">
+              <h2>Recent Commands</h2>
+              <button id="refreshJobsButton" class="secondary-button">Refresh Output</button>
+            </div>
+            <div id="jobsList" class="jobs-list"></div>
+          </section>
           <section id="latestLogPanel" class="latest-log-panel">
             <div class="latest-log-head">
               <div>
                 <div id="latestLogStatus" class="latest-log-status"></div>
-                <h2 id="latestLogTitle">Latest Output</h2>
+                <h2 id="latestLogTitle">Latest Command Output</h2>
                 <p id="latestLogMeta" class="eyebrow">No command has run yet</p>
               </div>
               <div class="latest-log-actions">
@@ -266,13 +273,6 @@
               </div>
             </div>
             <pre id="latestLogBody" class="latest-log-body">Run a command to see its output here.</pre>
-          </section>
-          <section class="jobs-panel">
-            <div class="section-head compact">
-              <h2>Recent Commands</h2>
-              <button id="refreshJobsButton" class="secondary-button">Refresh Output</button>
-            </div>
-            <div id="jobsList" class="jobs-list"></div>
           </section>
         </section>
 
