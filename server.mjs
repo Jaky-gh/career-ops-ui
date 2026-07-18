@@ -139,7 +139,23 @@ const PORT = Number(settings.port || 5177);
 const CAREER_OPS_ROOT = resolveFromProject(settings.careerOpsPath);
 const CODEX_COMMAND = process.env.CODEX_BIN
   || (existsSync("/Applications/Codex.app/Contents/Resources/codex") ? "/Applications/Codex.app/Contents/Resources/codex" : "codex");
-const ACTIONS = Object.fromEntries(Object.entries(settings.actions || {}).map(([id, action]) => [
+const codexPipelinePrompt = [
+  "Run career-ops pipeline mode for data/pipeline.md.",
+  "Process pending URLs using the Career-Ops instructions in this repo.",
+  "Write evaluation reports, tracker additions, and processed pipeline updates.",
+  "Do not submit applications."
+].join(" ");
+const actionSettings = {
+  "grade-codex": {
+    label: "Grade with Codex",
+    command: [CODEX_COMMAND, "exec", "--sandbox", "danger-full-access", "--cd", CAREER_OPS_ROOT, codexPipelinePrompt],
+    description: "Grades pending jobs by running the Career-Ops pipeline mode through Codex instead of OpenRouter.",
+    when: "Use this when OpenRouter is out of credits or you want the ChatGPT/Codex route.",
+    effect: "Uses your Codex/OpenAI account to write reports, tracker additions, and processed pipeline updates."
+  },
+  ...(settings.actions || {})
+};
+const ACTIONS = Object.fromEntries(Object.entries(actionSettings).map(([id, action]) => [
   id,
   {
     label: action.label || id,
