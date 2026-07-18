@@ -407,10 +407,14 @@ function parsePipelineCheckboxes(markdown) {
   return pending;
 }
 
+function hasPipelineTaskRows(markdown) {
+  return /^\s*-\s+\[[ xX!]\]\s+/m.test(markdown);
+}
+
 async function parsePipeline() {
   const markdown = await readTextIfExists(path.join(CAREER_OPS_ROOT, "data", "pipeline.md"));
   const checkboxRows = parsePipelineCheckboxes(markdown);
-  if (checkboxRows.length > 0) return checkboxRows;
+  if (checkboxRows.length > 0 || hasPipelineTaskRows(markdown)) return checkboxRows;
 
   const tables = parseMarkdownTables(markdown);
   const rows = tables.flatMap((table) => table.rows);
