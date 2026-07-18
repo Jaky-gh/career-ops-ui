@@ -25,7 +25,8 @@
         </div>
 
         <nav class="nav-stack" aria-label="Primary">
-          <button class="nav-item active" data-view="applications">Applications</button>
+          <button class="nav-item active" data-view="workflow">Workflow</button>
+          <button class="nav-item" data-view="applications">Applications</button>
           <button class="nav-item" data-view="history">History</button>
           <button class="nav-item" data-view="pipeline">Pipeline</button>
           <button class="nav-item" data-view="commands">Commands</button>
@@ -47,7 +48,77 @@
           <button id="refreshButton" class="icon-button" title="Refresh data">Refresh</button>
         </header>
 
-        <section id="applicationsView" class="view active">
+        <section id="workflowView" class="view active">
+          <div class="section-head">
+            <div>
+              <h2>Job Search Workflow</h2>
+              <p>Fetch jobs, grade them, review the best matches, apply, then update history.</p>
+            </div>
+          </div>
+
+          <div class="workflow-grid">
+            <section class="workflow-card">
+              <div class="workflow-step">1</div>
+              <div>
+                <h3>Fetch jobs</h3>
+                <p>Scan configured portals and add new matches to the pending pipeline.</p>
+                <button class="primary-button command-button" data-action="scan">Fetch Jobs</button>
+              </div>
+            </section>
+
+            <section class="workflow-card">
+              <div class="workflow-step">2</div>
+              <div>
+                <h3>Grade pending jobs</h3>
+                <p>Evaluate queued postings, create reports, and mark processed pipeline entries.</p>
+                <button class="primary-button command-button" data-action="grade">Grade Pipeline</button>
+              </div>
+            </section>
+
+            <section class="workflow-card">
+              <div class="workflow-step">3</div>
+              <div>
+                <h3>Add graded jobs to history</h3>
+                <p>Merge generated tracker additions into <code>applications.md</code>.</p>
+                <button class="secondary-button command-button" data-action="merge">Add to History</button>
+              </div>
+            </section>
+
+            <section class="workflow-card">
+              <div class="workflow-step">4</div>
+              <div>
+                <h3>Apply to strong fits</h3>
+                <p>Open the posting and report for high-scoring roles, submit manually, then mark the row Applied.</p>
+                <button class="secondary-button" data-show-ready="true">Review Apply-Ready Jobs</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="workflow-stats">
+            <div>
+              <span id="workflowPendingCount">0</span>
+              <label>Pending to grade</label>
+            </div>
+            <div>
+              <span id="workflowReadyCount">0</span>
+              <label>Ready to apply</label>
+            </div>
+            <div>
+              <span id="workflowAppliedCount">0</span>
+              <label>Applied</label>
+            </div>
+          </div>
+
+          <section class="history-panel" aria-label="Apply-ready jobs">
+            <div class="history-head">
+              <strong>Apply-Ready Jobs</strong>
+              <span id="applyReadyCount" class="eyebrow">0 jobs</span>
+            </div>
+            <div id="applyReadyList" class="history-list"></div>
+          </section>
+        </section>
+
+        <section id="applicationsView" class="view">
           <div class="section-head">
             <div>
               <h2>Application Review</h2>
@@ -111,6 +182,7 @@
                 <div class="button-row">
                   <button id="openJobButton" class="primary-button">Open Posting</button>
                   <button id="openReportButton" class="secondary-button">View Report</button>
+                  <button id="markAppliedButton" class="secondary-button">Mark Applied</button>
                 </div>
                 <pre id="reportPreview" class="report-preview hidden"></pre>
               </div>
@@ -184,7 +256,7 @@
           <div class="section-head">
             <div>
               <h2>How to Use Career-Ops</h2>
-              <p>A quick reference for reviewing opportunities and keeping the tracker current.</p>
+              <p>The app is built around one loop: fetch, grade, apply, and update history.</p>
             </div>
           </div>
 
@@ -192,49 +264,48 @@
             <section class="guide-panel">
               <div class="guide-step">1</div>
               <div>
-                <h3>Check the workspace</h3>
-                <p>The sidebar shows which <code>career-ops</code> checkout is connected. If the path is wrong, update <code>settings.local.json</code> and restart the server.</p>
-                <code>node server.mjs</code>
+                <h3>Start on Workflow</h3>
+                <p>Workflow is the main page. Use it when you want the app to tell you what to do next in the job search loop.</p>
               </div>
             </section>
 
             <section class="guide-panel">
               <div class="guide-step">2</div>
               <div>
-                <h3>Review applications</h3>
-                <p>Use Applications for the working list. Search across company, role, status, location, and notes; use filters when you want only applied roles, skips, or pipeline items.</p>
+                <h3>Fetch jobs</h3>
+                <p>Click Fetch Jobs to scan configured portals. New matches go into Pipeline as pending jobs that still need grading.</p>
               </div>
             </section>
 
             <section class="guide-panel">
               <div class="guide-step">3</div>
               <div>
-                <h3>Open details and reports</h3>
-                <p>Select any row to inspect the notes panel. Use Open Posting for the job URL and View Report for the evaluation write-up linked from <code>applications.md</code>.</p>
+                <h3>Grade the pipeline</h3>
+                <p>Click Grade Pipeline to evaluate pending jobs. When grading finishes, click Add to History to merge the generated tracker rows.</p>
               </div>
             </section>
 
             <section class="guide-panel">
               <div class="guide-step">4</div>
               <div>
-                <h3>Use History for status checks</h3>
-                <p>History shows tracker records sorted by date. Click a status card to jump back to Applications filtered to that status.</p>
+                <h3>Apply to strong fits</h3>
+                <p>Use Apply-Ready Jobs for roles scoring 4.5 or higher. Open the posting, read the report, submit manually, then click Applied.</p>
               </div>
             </section>
 
             <section class="guide-panel">
               <div class="guide-step">5</div>
               <div>
-                <h3>Queue new postings</h3>
-                <p>Pipeline is for jobs that still need evaluation. Paste a posting URL and queue it, or run the job scan when you want <code>career-ops</code> to find candidates.</p>
+                <h3>Use Applications for lookup</h3>
+                <p>Applications is the full table. Search and filter when you need to find a company, status, note, or report later.</p>
               </div>
             </section>
 
             <section class="guide-panel">
               <div class="guide-step">6</div>
               <div>
-                <h3>Run maintenance commands</h3>
-                <p>Commands runs local scripts from the connected checkout. Start with Doctor when setup looks off, then use verify, merge, dedup, and normalize to keep data tidy.</p>
+                <h3>Use Commands for repair</h3>
+                <p>Commands is the toolbox. Use Doctor when setup looks wrong, Verify for health checks, and Merge/Dedup/Normalize when tracker data needs cleanup.</p>
               </div>
             </section>
           </div>

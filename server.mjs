@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS = {
   actions: {
     doctor: { label: "Doctor", command: ["node", "doctor.mjs"] },
     scan: { label: "Search New Jobs", command: ["node", "scan.mjs"] },
+    grade: { label: "Grade Pipeline", command: ["node", "openrouter-runner.mjs", "pipeline"] },
     verify: { label: "Verify Pipeline", command: ["node", "verify-pipeline.mjs"] },
     merge: { label: "Merge Tracker", command: ["node", "merge-tracker.mjs"] },
     dedup: { label: "Deduplicate Tracker", command: ["node", "dedup-tracker.mjs", "--dry-run"] },
@@ -195,6 +196,10 @@ function firstValue(row, keys) {
   return "";
 }
 
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function slugify(value) {
   return String(value || "item")
     .toLowerCase()
@@ -249,9 +254,11 @@ async function parseApplications() {
     const roleLink = stripMarkdownLinks(firstValue(row, ["role", "position", "title", "puesto", "rol"]));
     const url = extractUrl(firstValue(row, ["url", "link", "jd", "posting"])) || companyLink.url || roleLink.url;
     const score = parseScore(firstValue(row, ["score", "fit", "rating"]));
+    const trackerNum = firstValue(row, ["#", "num", "id"]);
     return {
       id: `application:${index + 1}`,
       source: "tracker",
+      trackerNum,
       company: companyLink.text || "Unknown",
       role: roleLink.text || "Unknown role",
       status: firstValue(row, ["status", "estado"]) || "Tracked",
@@ -377,9 +384,20 @@ async function getData() {
     parseReports(),
     parsePipeline()
   ]);
-  const linkedReports = new Set(applications.map((item) => item.reportFile).filter(Boolean));
+  const reportsByFile = new Map(reports.map((report) => [report.reportFile, report]));
+  const enrichedApplications = applications.map((application) => {
+    const report = reportsByFile.get(application.reportFile);
+    if (!report) return application;
+    return {
+      ...application,
+      url: application.url || report.url,
+      location: application.location || report.location,
+      notes: application.notes || report.notes
+    };
+  });
+  const linkedReports = new Set(enrichedApplications.map((item) => item.reportFile).filter(Boolean));
   const untrackedReports = reports.filter((report) => !linkedReports.has(report.reportFile));
-  const items = [...applications, ...untrackedReports, ...pipeline];
+  const items = [...enrichedApplications, ...untrackedReports, ...pipeline];
   return {
     root: CAREER_OPS_ROOT,
     settings: {
@@ -466,6 +484,32 @@ async function addPipelineUrl(url) {
   await fs.writeFile(filePath, existing ? `${existing.replace(/\s*$/, "\n")}${line}` : line, "utf8");
 }
 
+async function updateApplicationStatus(trackerNum, status) {
+  const allowed = new Set(["Evaluated", "Applied", "Responded", "Interview", "Offer", "Rejected", "Discarded", "Skip"]);
+  if (!allowed.has(status)) throw new Error(`Unsupported status: ${status}`);
+  if (!String(trackerNum || "").trim()) throw new Error("Missing application number.");
+
+  const filePath = path.join(CAREER_OPS_ROOT, "data", "applications.md");
+  const markdown = await readTextIfExists(filePath);
+  if (!markdown) throw new Error("applications.md not found.");
+
+  const lines = markdown.split(/\r?\n/);
+  let updated = false;
+  const nextLines = lines.map((line) => {
+    if (!line.trim().startsWith("|") || isDividerRow(line)) return line;
+    const cells = splitMarkdownRow(line);
+    if (cells[0] !== String(trackerNum)) return line;
+    if (cells.length < 9) throw new Error(`Application #${trackerNum} has an unexpected tracker format.`);
+    cells[1] = status === "Applied" ? todayIso() : cells[1];
+    cells[5] = status;
+    updated = true;
+    return `| ${cells.join(" | ")} |`;
+  });
+
+  if (!updated) throw new Error(`Application #${trackerNum} not found.`);
+  await fs.writeFile(filePath, nextLines.join("\n"), "utf8");
+}
+
 function openUrl(url) {
   const parsed = new URL(url);
   if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Only http(s) URLs are supported.");
@@ -543,6 +587,13 @@ async function handleApi(req, res) {
       const body = await readBody(req);
       await addPipelineUrl(body.url);
       return sendJson(res, 201, { ok: true });
+    }
+
+    if (req.method === "POST" && url.pathname.match(/^\/api\/applications\/[^/]+\/status$/)) {
+      const id = decodeURIComponent(url.pathname.split("/")[3]);
+      const body = await readBody(req);
+      await updateApplicationStatus(id, body.status);
+      return sendJson(res, 200, { ok: true });
     }
 
     if (req.method === "POST" && url.pathname === "/api/open") {

@@ -421,6 +421,85 @@ dd {
   border-bottom: 1px solid var(--line);
 }
 
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.workflow-card {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  min-height: 190px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.workflow-step {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #e5eef9;
+  color: var(--accent-3);
+  font-weight: 800;
+}
+
+.workflow-card h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.workflow-card p {
+  min-height: 66px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.workflow-card code,
+.guide-panel p code {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f9fbf8;
+  padding: 1px 4px;
+  color: var(--accent-3);
+  font-size: 12px;
+}
+
+.workflow-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.workflow-stats div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.workflow-stats span {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.workflow-stats label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .status-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -635,15 +714,6 @@ dd {
   font-size: 12px;
 }
 
-.guide-panel p code {
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #f9fbf8;
-  padding: 1px 4px;
-  color: var(--accent-3);
-  font-size: 12px;
-}
-
 .empty-state {
   padding: 32px;
   color: var(--muted);
@@ -698,11 +768,14 @@ dd {
 
   .filters,
   .summary-grid,
+  .workflow-grid,
+  .workflow-stats,
   .status-board,
   .add-url-form {
     grid-template-columns: 1fr;
   }
 
+  .workflow-card,
   .history-item {
     grid-template-columns: 1fr;
   }

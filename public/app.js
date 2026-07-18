@@ -2,7 +2,7 @@ const state = {
   items: [],
   selectedId: null,
   health: null,
-  view: "applications"
+  view: "workflow"
 };
 
 const els = {
@@ -13,6 +13,11 @@ const els = {
   statusFilter: document.querySelector("#statusFilter"),
   sourceFilter: document.querySelector("#sourceFilter"),
   refreshButton: document.querySelector("#refreshButton"),
+  workflowPendingCount: document.querySelector("#workflowPendingCount"),
+  workflowReadyCount: document.querySelector("#workflowReadyCount"),
+  workflowAppliedCount: document.querySelector("#workflowAppliedCount"),
+  applyReadyCount: document.querySelector("#applyReadyCount"),
+  applyReadyList: document.querySelector("#applyReadyList"),
   applicationsTable: document.querySelector("#applicationsTable"),
   statusBoard: document.querySelector("#statusBoard"),
   historyCount: document.querySelector("#historyCount"),
@@ -35,6 +40,7 @@ const els = {
   detailNotes: document.querySelector("#detailNotes"),
   openJobButton: document.querySelector("#openJobButton"),
   openReportButton: document.querySelector("#openReportButton"),
+  markAppliedButton: document.querySelector("#markAppliedButton"),
   reportPreview: document.querySelector("#reportPreview"),
   commandGrid: document.querySelector("#commandGrid"),
   jobsList: document.querySelector("#jobsList"),
@@ -105,6 +111,13 @@ function dateSortValue(value) {
   return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
 
+function applyReadyItems() {
+  return state.items
+    .filter((item) => item.source === "tracker")
+    .filter((item) => typeof item.score === "number" && item.score >= 4.5)
+    .filter((item) => !["Applied", "Rejected", "Discarded", "Skip"].includes(item.status));
+}
+
 function filteredItems() {
   const q = els.searchInput.value.trim().toLowerCase();
   const status = els.statusFilter.value;
@@ -168,6 +181,38 @@ function renderApplications() {
     </tr>
   `).join("");
   els.emptyState.classList.toggle("hidden", items.length > 0);
+}
+
+function renderWorkflow() {
+  const pending = state.items.filter((item) => item.source === "pipeline" || item.status === "Pipeline");
+  const ready = applyReadyItems();
+  const applied = state.items.filter((item) => item.status === "Applied");
+
+  els.workflowPendingCount.textContent = pending.length;
+  els.workflowReadyCount.textContent = ready.length;
+  els.workflowAppliedCount.textContent = applied.length;
+  els.applyReadyCount.textContent = `${ready.length} ${ready.length === 1 ? "job" : "jobs"}`;
+  els.applyReadyList.innerHTML = ready.length ? ready.map((item) => `
+    <article class="history-item ${item.id === state.selectedId ? "selected" : ""}" data-id="${escapeHtml(item.id)}">
+      <div class="history-date">${escapeHtml(formatDate(item.date))}</div>
+      <div class="history-body">
+        <div class="history-title">
+          <strong>${escapeHtml(item.company)}</strong>
+          <span class="score-pill ${scoreClass(item.score)}">${formatScore(item.score)}</span>
+        </div>
+        <div>${escapeHtml(item.role)}</div>
+        <div class="history-meta">
+          <span>${escapeHtml(item.status || "Evaluated")}</span>
+          <span>${escapeHtml(item.location || "Location not listed")}</span>
+        </div>
+        ${item.notes ? `<p>${escapeHtml(item.notes)}</p>` : ""}
+      </div>
+      <div class="row-actions">
+        <button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button>
+        <button data-mark-applied="${escapeHtml(item.trackerNum || "")}" ${item.trackerNum ? "" : "disabled"}>Applied</button>
+      </div>
+    </article>
+  `).join("") : '<div class="empty-state">No high-scoring unapplied jobs yet. Fetch jobs, grade the pipeline, then add graded jobs to history.</div>';
 }
 
 function renderPipeline() {
@@ -249,6 +294,7 @@ function renderDetail() {
   els.detailNotes.textContent = item.notes || "No notes recorded yet.";
   els.openJobButton.disabled = !item.url;
   els.openReportButton.disabled = !item.reportFile;
+  els.markAppliedButton.disabled = item.source !== "tracker" || !item.trackerNum || item.status === "Applied";
   els.reportPreview.classList.add("hidden");
 }
 
@@ -282,6 +328,7 @@ async function renderJobs() {
 function render() {
   populateFilters();
   renderSummary();
+  renderWorkflow();
   renderApplications();
   renderHistory();
   renderPipeline();
@@ -344,11 +391,28 @@ async function openItem(item) {
   }
 }
 
+function showView(viewName) {
+  state.view = viewName;
+  document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === state.view));
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${state.view}View`));
+}
+
+async function markApplied(trackerNum) {
+  if (!trackerNum) return;
+  await api(`/api/applications/${encodeURIComponent(trackerNum)}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status: "Applied" })
+  });
+  toast("Application marked Applied");
+  await loadData();
+}
+
 document.addEventListener("click", async (event) => {
   const row = event.target.closest("[data-id]");
   if (row && !event.target.matches("button")) {
     state.selectedId = row.dataset.id;
     renderApplications();
+    renderWorkflow();
     renderHistory();
     renderDetail();
   }
@@ -362,12 +426,21 @@ document.addEventListener("click", async (event) => {
   const action = event.target.dataset.action;
   if (action) runCommand(action).catch((error) => toast(error.message));
 
+  const markAppliedId = event.target.dataset.markApplied;
+  if (markAppliedId) markApplied(markAppliedId).catch((error) => toast(error.message));
+
+  if (event.target.dataset.showReady) {
+    showView("applications");
+    els.statusFilter.value = "all";
+    els.sourceFilter.value = "tracker";
+    els.searchInput.value = "";
+    renderApplications();
+  }
+
   const historyStatus = event.target.closest("[data-history-status]")?.dataset.historyStatus;
   if (historyStatus) {
-    state.view = "applications";
+    showView("applications");
     els.statusFilter.value = historyStatus;
-    document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === state.view));
-    document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${state.view}View`));
     renderApplications();
   }
 
@@ -380,9 +453,7 @@ document.addEventListener("click", async (event) => {
 
 document.querySelectorAll(".nav-item").forEach((button) => {
   button.addEventListener("click", () => {
-    state.view = button.dataset.view;
-    document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
-    document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${state.view}View`));
+    showView(button.dataset.view);
   });
 });
 
@@ -401,6 +472,10 @@ els.openReportButton.addEventListener("click", async () => {
   const report = await api(`/api/reports/${encodeURIComponent(item.reportFile)}`);
   els.reportPreview.textContent = report.markdown;
   els.reportPreview.classList.remove("hidden");
+});
+els.markAppliedButton.addEventListener("click", async () => {
+  const item = state.items.find((candidate) => candidate.id === state.selectedId);
+  await markApplied(item?.trackerNum);
 });
 els.addUrlForm.addEventListener("submit", async (event) => {
   event.preventDefault();

@@ -10,6 +10,7 @@
   "actions": {
     "doctor": { "label": "Doctor", "command": ["node", "doctor.mjs"] },
     "scan": { "label": "Search New Jobs", "command": ["node", "scan.mjs"] },
+    "grade": { "label": "Grade Pipeline", "command": ["node", "openrouter-runner.mjs", "pipeline"] },
     "verify": { "label": "Verify Pipeline", "command": ["node", "verify-pipeline.mjs"] },
     "merge": { "label": "Merge Tracker", "command": ["node", "merge-tracker.mjs"] },
     "dedup": { "label": "Deduplicate Tracker", "command": ["node", "dedup-tracker.mjs", "--dry-run"] },
