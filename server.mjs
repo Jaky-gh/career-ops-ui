@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
+const STATE_DIR = path.join(__dirname, ".career-ops-ui");
+const JOBS_STATE_FILE = path.join(STATE_DIR, "jobs.json");
 
 const jobs = new Map();
 let nextJobId = 1;
@@ -127,6 +129,31 @@ async function readTextIfExists(filePath) {
   } catch {
     return "";
   }
+}
+
+function serializeJob(job) {
+  const { child, ...safeJob } = job;
+  return safeJob;
+}
+
+async function loadPersistedJobs() {
+  const saved = await loadJsonIfExists(JOBS_STATE_FILE);
+  if (!saved?.jobs?.length) return;
+
+  for (const savedJob of saved.jobs) {
+    const job = {
+      ...savedJob,
+      status: savedJob.status === "running" ? "interrupted" : savedJob.status
+    };
+    jobs.set(job.id, job);
+    nextJobId = Math.max(nextJobId, Number(job.id) + 1);
+  }
+}
+
+async function persistJobs() {
+  await fs.mkdir(STATE_DIR, { recursive: true });
+  const list = Array.from(jobs.values()).map(serializeJob).slice(-50);
+  await fs.writeFile(JOBS_STATE_FILE, JSON.stringify({ jobs: list }, null, 2), "utf8");
 }
 
 function splitMarkdownRow(line) {
@@ -425,9 +452,48 @@ async function getHealth() {
   };
 }
 
+function updateJobProgressFromLog(job, text) {
+  const processing = text.match(/Processing\s+(\d+)\s+pending listing/i);
+  if (processing) {
+    job.progress = {
+      current: 0,
+      total: Number(processing[1]),
+      label: "Preparing grading run"
+    };
+  }
+
+  for (const match of text.matchAll(/\[(\d+)\/(\d+)\]\s+([^\n]+)/g)) {
+    const index = Number(match[1]);
+    const total = Number(match[2]);
+    job.progress = {
+      current: Math.max(job.progress?.current || 0, index - 1),
+      total,
+      label: match[3].trim()
+    };
+    job.currentItemIndex = index;
+  }
+
+  if (/Report saved:/i.test(text) && job.progress?.total && job.currentItemIndex) {
+    job.progress = {
+      ...job.progress,
+      current: Math.max(job.progress.current, job.currentItemIndex)
+    };
+  }
+
+  if (/Pipeline processing complete/i.test(text) && job.progress?.total) {
+    job.progress = {
+      ...job.progress,
+      current: job.progress.total,
+      label: "Pipeline grading complete"
+    };
+  }
+}
+
 function appendLog(job, text) {
   job.logs += text;
+  updateJobProgressFromLog(job, text);
   job.updatedAt = new Date().toISOString();
+  void persistJobs();
 }
 
 function startJob(actionId) {
@@ -449,6 +515,7 @@ function startJob(actionId) {
     exitCode: null
   };
   jobs.set(id, job);
+  void persistJobs();
 
   const child = spawn(cmd, args, {
     cwd: CAREER_OPS_ROOT,
@@ -462,12 +529,20 @@ function startJob(actionId) {
   child.on("error", (error) => {
     job.status = "failed";
     appendLog(job, `${error.message}\n`);
+    void persistJobs();
   });
   child.on("close", (code) => {
     job.exitCode = code;
     job.status = code === 0 ? "succeeded" : "failed";
     job.updatedAt = new Date().toISOString();
     delete job.child;
+    if (code === 0 && job.progress?.total) {
+      job.progress = {
+        ...job.progress,
+        current: job.progress.total
+      };
+    }
+    void persistJobs();
   });
 
   return job;
@@ -579,6 +654,7 @@ async function handleApi(req, res) {
         job.child.kill();
         job.status = "cancelled";
         job.updatedAt = new Date().toISOString();
+        await persistJobs();
       }
       return sendJson(res, 200, { ...job, child: undefined });
     }
@@ -615,6 +691,8 @@ const server = createServer((req, res) => {
     serveStatic(req, res);
   }
 });
+
+await loadPersistedJobs();
 
 server.listen(PORT, () => {
   console.log(`Career-Ops Local UI: http://localhost:${PORT}`);

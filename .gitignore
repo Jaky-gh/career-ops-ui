@@ -3,6 +3,7 @@ node_modules/
 .env.*
 !.env.example
 settings.local.json
+.career-ops-ui/
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*

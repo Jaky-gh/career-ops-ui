@@ -500,6 +500,15 @@ dd {
   font-size: 13px;
 }
 
+.workflow-progress-panel {
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
 .status-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -649,6 +658,43 @@ dd {
   gap: 12px;
   padding: 12px;
   background: #f9fbf8;
+}
+
+.job-progress {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.job-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.progress-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--panel-2);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 180ms ease;
+}
+
+.job-progress-label {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .job-log {

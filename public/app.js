@@ -16,6 +16,10 @@ const els = {
   workflowPendingCount: document.querySelector("#workflowPendingCount"),
   workflowReadyCount: document.querySelector("#workflowReadyCount"),
   workflowAppliedCount: document.querySelector("#workflowAppliedCount"),
+  workflowProgressPanel: document.querySelector("#workflowProgressPanel"),
+  workflowProgressTitle: document.querySelector("#workflowProgressTitle"),
+  workflowProgressStatus: document.querySelector("#workflowProgressStatus"),
+  workflowProgressBody: document.querySelector("#workflowProgressBody"),
   applyReadyCount: document.querySelector("#applyReadyCount"),
   applyReadyList: document.querySelector("#applyReadyList"),
   applicationsTable: document.querySelector("#applicationsTable"),
@@ -215,6 +219,16 @@ function renderWorkflow() {
   `).join("") : '<div class="empty-state">No high-scoring unapplied jobs yet. Fetch jobs, grade the pipeline, then add graded jobs to history.</div>';
 }
 
+function renderWorkflowProgress(jobs = []) {
+  const gradeJob = jobs.find((job) => job.action === "grade") || jobs.find((job) => job.progress?.total);
+  els.workflowProgressPanel.classList.toggle("hidden", !gradeJob);
+  if (!gradeJob) return;
+
+  els.workflowProgressTitle.textContent = gradeJob.label || "Grading Progress";
+  els.workflowProgressStatus.textContent = `${gradeJob.status} / exit ${gradeJob.exitCode ?? "pending"}`;
+  els.workflowProgressBody.innerHTML = renderJobProgress(gradeJob) || '<div class="empty-state">Waiting for grading progress output...</div>';
+}
+
 function renderPipeline() {
   const pipeline = state.items.filter((item) => item.source === "pipeline" || item.status === "Pipeline");
   els.pipelineTable.innerHTML = pipeline.map((item) => `
@@ -309,8 +323,28 @@ function renderCommands() {
   `).join("");
 }
 
+function renderJobProgress(job) {
+  const progress = job.progress;
+  if (!progress?.total) return "";
+  const current = Math.min(progress.current || 0, progress.total);
+  const percent = Math.round((current / progress.total) * 100);
+  return `
+    <div class="job-progress" aria-label="${escapeHtml(job.label)} progress">
+      <div class="job-progress-meta">
+        <span>${escapeHtml(String(current))}/${escapeHtml(String(progress.total))}</span>
+        <span>${escapeHtml(String(percent))}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width: ${escapeHtml(String(percent))}%"></div>
+      </div>
+      <div class="job-progress-label">${escapeHtml(progress.label || "Working through queue")}</div>
+    </div>
+  `;
+}
+
 async function renderJobs() {
   const { jobs } = await api("/api/jobs");
+  renderWorkflowProgress(jobs);
   els.jobsList.innerHTML = jobs.length ? jobs.map((job) => `
     <article class="job-item">
       <div class="job-meta">
@@ -320,6 +354,7 @@ async function renderJobs() {
         </div>
         <button class="secondary-button" data-cancel="${escapeHtml(job.id)}" ${job.status === "running" ? "" : "disabled"}>Cancel</button>
       </div>
+      ${renderJobProgress(job)}
       <pre class="job-log">${escapeHtml(job.logs || "Waiting for command output...")}</pre>
     </article>
   `).join("") : '<div class="empty-state">No commands have run in this UI session.</div>';
