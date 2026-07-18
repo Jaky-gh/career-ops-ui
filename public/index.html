@@ -253,9 +253,23 @@
             </div>
           </div>
           <div id="commandGrid" class="command-grid"></div>
+          <section id="latestLogPanel" class="latest-log-panel">
+            <div class="latest-log-head">
+              <div>
+                <div id="latestLogStatus" class="latest-log-status"></div>
+                <h2 id="latestLogTitle">Latest Output</h2>
+                <p id="latestLogMeta" class="eyebrow">No command has run yet</p>
+              </div>
+              <div class="latest-log-actions">
+                <button id="latestLogViewButton" class="secondary-button" type="button" disabled>Open Large</button>
+                <button id="latestLogCopyButton" class="primary-button" type="button" disabled>Copy Log</button>
+              </div>
+            </div>
+            <pre id="latestLogBody" class="latest-log-body">Run a command to see its output here.</pre>
+          </section>
           <section class="jobs-panel">
             <div class="section-head compact">
-              <h2>Command Log</h2>
+              <h2>Recent Commands</h2>
               <button id="refreshJobsButton" class="secondary-button">Refresh Output</button>
             </div>
             <div id="jobsList" class="jobs-list"></div>

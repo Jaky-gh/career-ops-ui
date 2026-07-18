@@ -135,6 +135,18 @@ export async function copyOpenJobLog() {
   await copyJobLog(jobId);
 }
 
+export async function copyLatestJobLog() {
+  const jobId = els.latestLogPanel.dataset.jobId;
+  if (!jobId) return;
+  await copyJobLog(jobId);
+}
+
+export async function viewLatestJobLog() {
+  const jobId = els.latestLogPanel.dataset.jobId;
+  if (!jobId) return;
+  await viewJobLog(jobId);
+}
+
 export { closeLogModal };
 
 export async function addPipelineUrl(url) {

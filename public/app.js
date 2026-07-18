@@ -2,6 +2,7 @@ import { api, toast } from "./js/api.js";
 import {
   addPipelineUrl,
   closeLogModal,
+  copyLatestJobLog,
   copyOpenJobLog,
   copyJobLog,
   markApplied,
@@ -12,6 +13,7 @@ import {
   showView,
   skipJob,
   tailorResume,
+  viewLatestJobLog,
   viewJobLog
 } from "./js/actions.js";
 import { els } from "./js/dom.js";
@@ -80,6 +82,8 @@ document.addEventListener("click", async (event) => {
 
 els.logModalCloseButton.addEventListener("click", closeLogModal);
 els.logModalCopyButton.addEventListener("click", () => copyOpenJobLog().catch((error) => toast(error.message)));
+els.latestLogViewButton.addEventListener("click", () => viewLatestJobLog().catch((error) => toast(error.message)));
+els.latestLogCopyButton.addEventListener("click", () => copyLatestJobLog().catch((error) => toast(error.message)));
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !els.logModal.classList.contains("hidden")) {

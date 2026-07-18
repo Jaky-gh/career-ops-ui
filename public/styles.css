@@ -732,6 +732,65 @@ dd {
   text-align: left;
 }
 
+.latest-log-panel {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(20, 108, 90, 0.32);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 -12px 32px rgba(21, 31, 25, 0.1);
+}
+
+.latest-log-panel.empty {
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
+.latest-log-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  background: #f9fbf8;
+}
+
+.latest-log-head h2 {
+  margin: 6px 0 4px;
+  font-size: 18px;
+}
+
+.latest-log-status {
+  min-height: 24px;
+}
+
+.latest-log-head .eyebrow {
+  overflow-wrap: anywhere;
+}
+
+.latest-log-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.latest-log-body {
+  max-height: min(34vh, 360px);
+  min-height: 190px;
+  overflow: auto;
+  margin: 0;
+  padding: 14px;
+  background: #101817;
+  color: #e7f2eb;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 .jobs-list {
   display: grid;
   gap: 12px;
@@ -1082,9 +1141,19 @@ dd {
   }
 
   .log-modal-head,
-  .log-modal-footer {
+  .log-modal-footer,
+  .latest-log-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .latest-log-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .latest-log-body {
+    max-height: 320px;
   }
 
   .log-modal-body {

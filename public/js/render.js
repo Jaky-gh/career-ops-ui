@@ -232,8 +232,36 @@ export function renderJobProgress(job) {
   `;
 }
 
+export function renderLatestLog(jobs) {
+  const latestJob = jobs[0];
+  els.latestLogPanel.classList.toggle("empty", !latestJob);
+  els.latestLogViewButton.disabled = !latestJob;
+  els.latestLogCopyButton.disabled = !latestJob;
+
+  if (!latestJob) {
+    els.latestLogTitle.textContent = "Latest Output";
+    els.latestLogStatus.textContent = "";
+    els.latestLogMeta.textContent = "No command has run yet";
+    els.latestLogBody.textContent = "Run a command to see its output here.";
+    els.latestLogPanel.removeAttribute("data-job-id");
+    return;
+  }
+
+  els.latestLogTitle.textContent = latestJob.label || "Command Log";
+  els.latestLogStatus.innerHTML = `
+    <span class="job-status ${jobStatusClass(latestJob.status)}">
+      <span class="job-status-dot"></span>
+      ${escapeHtml(latestJob.status || "unknown")}
+    </span>
+  `;
+  els.latestLogMeta.textContent = `exit ${latestJob.exitCode ?? "pending"} / ${latestJob.command || "command unavailable"}`;
+  els.latestLogBody.textContent = latestJob.logs || "Waiting for command output...";
+  els.latestLogPanel.dataset.jobId = latestJob.id;
+}
+
 export function renderJobsList(jobs) {
   renderWorkflowProgress(jobs);
+  renderLatestLog(jobs);
   els.jobsList.innerHTML = jobs.length ? jobs.map((job) => `
     <article class="job-item">
       <div class="job-meta">
@@ -254,7 +282,6 @@ export function renderJobsList(jobs) {
         </div>
       </div>
       ${renderJobProgress(job)}
-      <pre class="job-log">${escapeHtml(job.logs || "Waiting for command output...")}</pre>
     </article>
   `).join("") : '<div class="empty-state">No commands have run in this UI session.</div>';
 }
