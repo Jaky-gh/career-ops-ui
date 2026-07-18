@@ -37,15 +37,20 @@ export function renderSummary() {
 }
 
 export function renderApplications() {
-  const items = filteredItems();
+  const items = [...filteredItems()].sort((a, b) => {
+    const dateDiff = dateSortValue(b.date) - dateSortValue(a.date);
+    if (dateDiff) return dateDiff;
+    return `${a.company} ${a.role}`.localeCompare(`${b.company} ${b.role}`);
+  });
   els.applicationsTable.innerHTML = items.map((item) => `
     <tr data-id="${escapeHtml(item.id)}" class="${item.id === state.selectedId ? "selected" : ""}">
-      <td><strong>${escapeHtml(item.company)}</strong><br><span class="source-pill">${escapeHtml(sourceLabel(item.source))}</span></td>
-      <td>${escapeHtml(item.role)}</td>
-      <td><span class="status-pill">${escapeHtml(item.status || "-")}</span></td>
-      <td><span class="score-pill ${scoreClass(item.score)}">${formatScore(item.score)}</span></td>
-      <td>${escapeHtml(item.location || "-")}</td>
-      <td>
+      <td class="date-cell">${escapeHtml(formatDate(item.date))}</td>
+      <td class="company-cell"><strong>${escapeHtml(item.company)}</strong><br><span class="source-pill">${escapeHtml(sourceLabel(item.source))}</span></td>
+      <td class="role-cell">${escapeHtml(item.role)}</td>
+      <td class="status-cell"><span class="status-pill">${escapeHtml(item.status || "-")}</span></td>
+      <td class="score-cell"><span class="score-pill ${scoreClass(item.score)}">${formatScore(item.score)}</span></td>
+      <td class="location-cell">${escapeHtml(item.location || "-")}</td>
+      <td class="actions-cell">
         <div class="row-actions">
           <button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button>
         </div>

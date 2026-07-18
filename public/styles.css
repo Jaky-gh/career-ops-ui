@@ -244,7 +244,8 @@ select {
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
 }
 
@@ -258,13 +259,15 @@ td {
 
 th {
   color: var(--muted);
-  background: #f9fbf8;
+  background: #f5f8f4;
   font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 td {
+  background: #ffffff;
   overflow-wrap: anywhere;
 }
 
@@ -278,9 +281,62 @@ tbody tr {
   transition: background 120ms ease;
 }
 
-tbody tr:hover,
-tbody tr.selected {
+tbody tr:hover td,
+tbody tr.selected td {
   background: #edf5f1;
+}
+
+.applications-table th:nth-child(1),
+.applications-table td:nth-child(1) {
+  width: 118px;
+}
+
+.applications-table th:nth-child(2),
+.applications-table td:nth-child(2) {
+  width: 170px;
+}
+
+.applications-table th:nth-child(4),
+.applications-table td:nth-child(4) {
+  width: 124px;
+}
+
+.applications-table th:nth-child(5),
+.applications-table td:nth-child(5) {
+  width: 86px;
+}
+
+.applications-table th:nth-child(6),
+.applications-table td:nth-child(6) {
+  width: 150px;
+}
+
+.applications-table th:nth-child(7),
+.applications-table td:nth-child(7) {
+  width: 78px;
+}
+
+.date-cell,
+.score-cell,
+.status-cell,
+.actions-cell {
+  white-space: nowrap;
+}
+
+.date-cell {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.company-cell strong,
+.role-cell {
+  line-height: 1.35;
+}
+
+.location-cell {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .status-pill,
