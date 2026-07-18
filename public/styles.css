@@ -734,7 +734,7 @@ dd {
 
 .latest-log-panel {
   overflow: hidden;
-  margin-top: 18px;
+  margin-bottom: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
