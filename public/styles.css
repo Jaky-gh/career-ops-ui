@@ -687,6 +687,76 @@ dd {
   background: #f9fbf8;
 }
 
+.job-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.job-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.job-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.job-status-running {
+  border-color: #b7d9cd;
+  background: #e8f6f0;
+  color: var(--accent);
+}
+
+.job-status-running .job-status-dot {
+  animation: status-pulse 1s ease-in-out infinite;
+}
+
+.job-status-succeeded {
+  border-color: #b9dfc8;
+  background: #ecf8ef;
+  color: var(--good);
+}
+
+.job-status-failed {
+  border-color: #efc0c0;
+  background: #fff0f0;
+  color: var(--bad);
+}
+
+.job-status-cancelled,
+.job-status-interrupted {
+  border-color: #e3d0a3;
+  background: #fff8e8;
+  color: var(--warn);
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .job-actions {
   display: flex;
   flex-wrap: wrap;

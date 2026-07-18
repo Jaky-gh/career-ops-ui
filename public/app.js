@@ -355,6 +355,10 @@ function renderJobProgress(job) {
   `;
 }
 
+function jobStatusClass(status = "") {
+  return `job-status-${String(status).toLowerCase().replace(/[^a-z0-9]+/g, "-") || "unknown"}`;
+}
+
 async function renderJobs() {
   const { jobs } = await api("/api/jobs");
   renderWorkflowProgress(jobs);
@@ -362,8 +366,14 @@ async function renderJobs() {
     <article class="job-item">
       <div class="job-meta">
         <div>
-          <strong>${escapeHtml(job.label)}</strong>
-          <div class="eyebrow">${escapeHtml(job.status)} / exit ${job.exitCode ?? "pending"}</div>
+          <div class="job-title-line">
+            <strong>${escapeHtml(job.label)}</strong>
+            <span class="job-status ${jobStatusClass(job.status)}">
+              <span class="job-status-dot"></span>
+              ${escapeHtml(job.status)}
+            </span>
+          </div>
+          <div class="eyebrow">exit ${job.exitCode ?? "pending"}</div>
         </div>
         <div class="job-actions">
           <button class="secondary-button" data-copy-job-log="${escapeHtml(job.id)}">Copy Log</button>
