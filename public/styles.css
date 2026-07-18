@@ -268,6 +268,12 @@ td {
   overflow-wrap: anywhere;
 }
 
+.empty-table-cell {
+  color: var(--muted);
+  padding: 32px;
+  text-align: center;
+}
+
 tbody tr {
   transition: background 120ms ease;
 }
@@ -415,6 +421,108 @@ dd {
   border-bottom: 1px solid var(--line);
 }
 
+.status-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.status-card {
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 14px;
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.status-card:hover {
+  border-color: var(--accent);
+}
+
+.status-card span {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.status-card strong {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.history-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  background: #f9fbf8;
+}
+
+.history-list {
+  display: grid;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  transition: background 120ms ease;
+}
+
+.history-item:hover,
+.history-item.selected {
+  background: #edf5f1;
+}
+
+.history-date {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.history-body {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.history-title,
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.history-body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .add-url-form {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) auto;
@@ -529,8 +637,17 @@ dd {
 
   .filters,
   .summary-grid,
+  .status-board,
   .add-url-form {
     grid-template-columns: 1fr;
+  }
+
+  .history-item {
+    grid-template-columns: 1fr;
+  }
+
+  .history-item .row-actions {
+    justify-content: flex-start;
   }
 
   table {

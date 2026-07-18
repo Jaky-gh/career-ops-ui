@@ -14,6 +14,9 @@ const els = {
   sourceFilter: document.querySelector("#sourceFilter"),
   refreshButton: document.querySelector("#refreshButton"),
   applicationsTable: document.querySelector("#applicationsTable"),
+  statusBoard: document.querySelector("#statusBoard"),
+  historyCount: document.querySelector("#historyCount"),
+  historyList: document.querySelector("#historyList"),
   pipelineTable: document.querySelector("#pipelineTable"),
   emptyState: document.querySelector("#emptyState"),
   totalCount: document.querySelector("#totalCount"),
@@ -70,6 +73,38 @@ function formatScore(score) {
   return score === null || score === undefined ? "-" : Number(score).toFixed(1);
 }
 
+function sourceLabel(source = "") {
+  return {
+    tracker: "Tracker",
+    pipeline: "Pipeline",
+    report: "Report",
+    sample: "Sample"
+  }[source] || source || "Unknown";
+}
+
+function formatDate(value) {
+  if (!value) return "No date";
+  const dateOnly = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    return new Date(Number(year), Number(month) - 1, Number(day))
+      .toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function dateSortValue(value) {
+  const dateOnly = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
 function filteredItems() {
   const q = els.searchInput.value.trim().toLowerCase();
   const status = els.statusFilter.value;
@@ -91,7 +126,7 @@ function populateFilters() {
   els.statusFilter.innerHTML = '<option value="all">All statuses</option>'
     + statuses.map((status) => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`).join("");
   els.sourceFilter.innerHTML = '<option value="all">All sources</option>'
-    + sources.map((source) => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join("");
+    + sources.map((source) => `<option value="${escapeHtml(source)}">${escapeHtml(sourceLabel(source))}</option>`).join("");
 
   els.statusFilter.value = statuses.includes(currentStatus) ? currentStatus : "all";
   els.sourceFilter.value = sources.includes(currentSource) ? currentSource : "all";
@@ -120,7 +155,7 @@ function renderApplications() {
   const items = filteredItems();
   els.applicationsTable.innerHTML = items.map((item) => `
     <tr data-id="${escapeHtml(item.id)}" class="${item.id === state.selectedId ? "selected" : ""}">
-      <td><strong>${escapeHtml(item.company)}</strong><br><span class="source-pill">${escapeHtml(item.source)}</span></td>
+      <td><strong>${escapeHtml(item.company)}</strong><br><span class="source-pill">${escapeHtml(sourceLabel(item.source))}</span></td>
       <td>${escapeHtml(item.role)}</td>
       <td><span class="status-pill">${escapeHtml(item.status || "-")}</span></td>
       <td><span class="score-pill ${scoreClass(item.score)}">${formatScore(item.score)}</span></td>
@@ -142,10 +177,55 @@ function renderPipeline() {
       <td><strong>${escapeHtml(item.company)}</strong></td>
       <td>${escapeHtml(item.role)}</td>
       <td>${escapeHtml(item.location || "-")}</td>
-      <td>${escapeHtml(item.notes || "-")}</td>
+      <td>${escapeHtml(item.notes || "Ready for evaluation")}</td>
       <td><div class="row-actions"><button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button></div></td>
     </tr>
-  `).join("");
+  `).join("") || '<tr><td colspan="5" class="empty-table-cell">No pending postings in the pipeline.</td></tr>';
+}
+
+function renderHistory() {
+  const trackable = state.items.filter((item) => item.source !== "pipeline" || item.status !== "Pipeline");
+  const statuses = Array.from(trackable.reduce((counts, item) => {
+    const status = item.status || "Unspecified";
+    counts.set(status, (counts.get(status) || 0) + 1);
+    return counts;
+  }, new Map()).entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  els.statusBoard.innerHTML = statuses.length ? statuses.map(([status, count]) => `
+    <button class="status-card" data-history-status="${escapeHtml(status)}" title="Filter Applications by ${escapeHtml(status)}">
+      <span>${escapeHtml(String(count))}</span>
+      <strong>${escapeHtml(status)}</strong>
+    </button>
+  `).join("") : '<div class="empty-state">No tracker statuses yet.</div>';
+
+  const history = [...trackable].sort((a, b) => {
+    const dateDiff = dateSortValue(b.date) - dateSortValue(a.date);
+    if (dateDiff) return dateDiff;
+    return `${a.company} ${a.role}`.localeCompare(`${b.company} ${b.role}`);
+  });
+
+  els.historyCount.textContent = `${history.length} ${history.length === 1 ? "record" : "records"}`;
+  els.historyList.innerHTML = history.length ? history.map((item) => `
+    <article class="history-item ${item.id === state.selectedId ? "selected" : ""}" data-id="${escapeHtml(item.id)}">
+      <div class="history-date">${escapeHtml(formatDate(item.date))}</div>
+      <div class="history-body">
+        <div class="history-title">
+          <strong>${escapeHtml(item.company)}</strong>
+          <span class="status-pill">${escapeHtml(item.status || "-")}</span>
+        </div>
+        <div>${escapeHtml(item.role)}</div>
+        <div class="history-meta">
+          <span>${escapeHtml(item.location || "Location not listed")}</span>
+          <span>${escapeHtml(sourceLabel(item.source))}</span>
+          <span>Score ${escapeHtml(formatScore(item.score))}</span>
+        </div>
+        ${item.notes ? `<p>${escapeHtml(item.notes)}</p>` : ""}
+      </div>
+      <div class="row-actions">
+        <button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button>
+      </div>
+    </article>
+  `).join("") : '<div class="empty-state">No tracker history yet. Evaluated applications will appear here.</div>';
 }
 
 function renderDetail() {
@@ -164,9 +244,9 @@ function renderDetail() {
   els.detailScore.className = `score-pill ${scoreClass(item.score)}`;
   els.detailStatus.textContent = item.status || "-";
   els.detailLocation.textContent = item.location || "-";
-  els.detailSource.textContent = item.source || "-";
-  els.detailDate.textContent = item.date || "-";
-  els.detailNotes.textContent = item.notes || "";
+  els.detailSource.textContent = sourceLabel(item.source);
+  els.detailDate.textContent = formatDate(item.date);
+  els.detailNotes.textContent = item.notes || "No notes recorded yet.";
   els.openJobButton.disabled = !item.url;
   els.openReportButton.disabled = !item.reportFile;
   els.reportPreview.classList.add("hidden");
@@ -190,19 +270,20 @@ async function renderJobs() {
       <div class="job-meta">
         <div>
           <strong>${escapeHtml(job.label)}</strong>
-          <div class="eyebrow">${escapeHtml(job.status)} / exit ${job.exitCode ?? "-"}</div>
+          <div class="eyebrow">${escapeHtml(job.status)} / exit ${job.exitCode ?? "pending"}</div>
         </div>
         <button class="secondary-button" data-cancel="${escapeHtml(job.id)}" ${job.status === "running" ? "" : "disabled"}>Cancel</button>
       </div>
-      <pre class="job-log">${escapeHtml(job.logs || "No output yet.")}</pre>
+      <pre class="job-log">${escapeHtml(job.logs || "Waiting for command output...")}</pre>
     </article>
-  `).join("") : '<div class="empty-state">No commands have run yet.</div>';
+  `).join("") : '<div class="empty-state">No commands have run in this UI session.</div>';
 }
 
 function render() {
   populateFilters();
   renderSummary();
   renderApplications();
+  renderHistory();
   renderPipeline();
   renderDetail();
   renderCommands();
@@ -213,11 +294,11 @@ async function loadHealth() {
   els.repoRoot.textContent = state.health.root;
   els.settingsSource.textContent = `Settings: ${state.health.settings.sources.join(" + ")}`;
   if (!state.health.exists) {
-    els.healthStatus.textContent = "career-ops checkout not found";
+    els.healthStatus.textContent = "Career-Ops checkout not found";
   } else if (state.health.missing.length) {
-    els.healthStatus.textContent = `Onboarding needed: ${state.health.missing.join(", ")}`;
+    els.healthStatus.textContent = `Needs setup files: ${state.health.missing.join(", ")}`;
   } else {
-    els.healthStatus.textContent = "Ready";
+    els.healthStatus.textContent = "Ready to review applications";
   }
 }
 
@@ -264,10 +345,11 @@ async function openItem(item) {
 }
 
 document.addEventListener("click", async (event) => {
-  const row = event.target.closest("tr[data-id]");
+  const row = event.target.closest("[data-id]");
   if (row && !event.target.matches("button")) {
     state.selectedId = row.dataset.id;
     renderApplications();
+    renderHistory();
     renderDetail();
   }
 
@@ -279,6 +361,15 @@ document.addEventListener("click", async (event) => {
 
   const action = event.target.dataset.action;
   if (action) runCommand(action).catch((error) => toast(error.message));
+
+  const historyStatus = event.target.closest("[data-history-status]")?.dataset.historyStatus;
+  if (historyStatus) {
+    state.view = "applications";
+    els.statusFilter.value = historyStatus;
+    document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === state.view));
+    document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `${state.view}View`));
+    renderApplications();
+  }
 
   const cancelId = event.target.dataset.cancel;
   if (cancelId) {
@@ -318,7 +409,7 @@ els.addUrlForm.addEventListener("submit", async (event) => {
     body: JSON.stringify({ url: els.urlInput.value })
   });
   els.urlInput.value = "";
-  toast("URL added to pipeline");
+  toast("Posting queued for review");
   await loadData();
 });
 

@@ -13,7 +13,7 @@
           <div class="brand-mark">CO</div>
           <div>
             <h1>Career-Ops</h1>
-            <p>Local control panel</p>
+            <p>Application workspace</p>
           </div>
         </div>
 
@@ -26,6 +26,7 @@
 
         <nav class="nav-stack" aria-label="Primary">
           <button class="nav-item active" data-view="applications">Applications</button>
+          <button class="nav-item" data-view="history">History</button>
           <button class="nav-item" data-view="pipeline">Pipeline</button>
           <button class="nav-item" data-view="commands">Commands</button>
         </nav>
@@ -34,7 +35,7 @@
       <main class="main">
         <header class="topbar">
           <div class="filters">
-            <input id="searchInput" type="search" placeholder="Search company, role, status, notes">
+            <input id="searchInput" type="search" placeholder="Search company, role, status, location, notes">
             <select id="statusFilter" aria-label="Status filter">
               <option value="all">All statuses</option>
             </select>
@@ -46,22 +47,28 @@
         </header>
 
         <section id="applicationsView" class="view active">
+          <div class="section-head">
+            <div>
+              <h2>Application Review</h2>
+              <p>Scan the tracker, pending leads, and evaluation notes in one place.</p>
+            </div>
+          </div>
           <div class="summary-grid">
             <div>
               <span id="totalCount">0</span>
-              <label>Total</label>
+              <label>Total records</label>
             </div>
             <div>
               <span id="pipelineCount">0</span>
-              <label>Pipeline</label>
+              <label>Pending leads</label>
             </div>
             <div>
               <span id="recommendedCount">0</span>
-              <label>Recommended</label>
+              <label>Strong fits</label>
             </div>
             <div>
               <span id="averageScore">-</span>
-              <label>Avg score</label>
+              <label>Average score</label>
             </div>
           </div>
 
@@ -80,11 +87,11 @@
                 </thead>
                 <tbody id="applicationsTable"></tbody>
               </table>
-              <div id="emptyState" class="empty-state hidden">No matching applications.</div>
+              <div id="emptyState" class="empty-state hidden">No applications match the current filters.</div>
             </section>
 
             <aside class="detail-panel">
-              <div id="detailEmpty" class="detail-empty">Select an application to inspect it.</div>
+              <div id="detailEmpty" class="detail-empty">Select a row to review status, notes, and the linked report.</div>
               <div id="detailContent" class="hidden">
                 <div class="detail-head">
                   <div>
@@ -101,7 +108,7 @@
                 </dl>
                 <p id="detailNotes" class="notes"></p>
                 <div class="button-row">
-                  <button id="openJobButton" class="primary-button">Open Job Description</button>
+                  <button id="openJobButton" class="primary-button">Open Posting</button>
                   <button id="openReportButton" class="secondary-button">View Report</button>
                 </div>
                 <pre id="reportPreview" class="report-preview hidden"></pre>
@@ -110,17 +117,34 @@
           </div>
         </section>
 
+        <section id="historyView" class="view">
+          <div class="section-head">
+            <div>
+              <h2>Application History</h2>
+              <p>Track what has been evaluated, skipped, and submitted.</p>
+            </div>
+          </div>
+          <div id="statusBoard" class="status-board"></div>
+          <section class="history-panel" aria-label="Application history">
+            <div class="history-head">
+              <strong>Tracker Timeline</strong>
+              <span id="historyCount" class="eyebrow">0 records</span>
+            </div>
+            <div id="historyList" class="history-list"></div>
+          </section>
+        </section>
+
         <section id="pipelineView" class="view">
           <div class="section-head">
             <div>
-              <h2>Search New Ones</h2>
-              <p>Add a posting URL to the pipeline or run the configured career-ops scan.</p>
+              <h2>Pipeline Review</h2>
+              <p>Keep new postings queued before they become tracker entries.</p>
             </div>
-            <button class="primary-button command-button" data-action="scan">Search New Jobs</button>
+            <button class="primary-button command-button" data-action="scan">Run Job Scan</button>
           </div>
           <form id="addUrlForm" class="add-url-form">
             <input id="urlInput" type="url" placeholder="https://company.com/jobs/role" required>
-            <button class="secondary-button" type="submit">Add URL</button>
+            <button class="secondary-button" type="submit">Queue Posting</button>
           </form>
           <section class="table-panel">
             <table>
@@ -142,14 +166,14 @@
           <div class="section-head">
             <div>
               <h2>Commands</h2>
-              <p>Run local career-ops scripts and watch the output here.</p>
+              <p>Run local maintenance tasks and review command output.</p>
             </div>
           </div>
           <div id="commandGrid" class="command-grid"></div>
           <section class="jobs-panel">
             <div class="section-head compact">
-              <h2>Job Log</h2>
-              <button id="refreshJobsButton" class="secondary-button">Refresh Logs</button>
+              <h2>Command Log</h2>
+              <button id="refreshJobsButton" class="secondary-button">Refresh Output</button>
             </div>
             <div id="jobsList" class="jobs-list"></div>
           </section>

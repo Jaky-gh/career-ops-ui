@@ -178,6 +178,11 @@ function extractUrl(value = "") {
   return bare ? bare[0].replace(/[),.;]+$/, "") : "";
 }
 
+function extractReportFile(value = "") {
+  const link = String(value).match(/\]\([^)]+\/([^/)]+\.md)\)/);
+  return link ? link[1] : "";
+}
+
 function parseScore(value = "") {
   const match = String(value).match(/([0-5](?:\.\d+)?)(?:\s*\/\s*5)?/);
   return match ? Number(match[1]) : null;
@@ -254,14 +259,44 @@ async function parseApplications() {
       date: firstValue(row, ["date", "applied", "fecha"]),
       url,
       location: firstValue(row, ["location", "ubicacion", "ubicación"]),
-      reportFile: "",
+      reportFile: extractReportFile(firstValue(row, ["report"])),
       notes: firstValue(row, ["notes", "notas"])
     };
   });
 }
 
+function parsePipelineCheckboxes(markdown) {
+  const lines = markdown.split(/\r?\n/);
+  const pending = [];
+
+  for (const line of lines) {
+    const match = line.match(/^\s*-\s+\[\s\]\s+(.+)$/);
+    if (!match) continue;
+    const parts = match[1].split("|").map((part) => part.trim());
+    const url = extractUrl(parts[0] || match[1]);
+    pending.push({
+      id: `pipeline:${pending.length + 1}`,
+      source: "pipeline",
+      company: parts[1] || "New lead",
+      role: parts[2] || "Unreviewed role",
+      status: "Pipeline",
+      score: null,
+      date: "",
+      url,
+      location: parts[3] || "",
+      reportFile: "",
+      notes: parts[4] || ""
+    });
+  }
+
+  return pending;
+}
+
 async function parsePipeline() {
   const markdown = await readTextIfExists(path.join(CAREER_OPS_ROOT, "data", "pipeline.md"));
+  const checkboxRows = parsePipelineCheckboxes(markdown);
+  if (checkboxRows.length > 0) return checkboxRows;
+
   const tables = parseMarkdownTables(markdown);
   const rows = tables.flatMap((table) => table.rows);
 
@@ -342,7 +377,9 @@ async function getData() {
     parseReports(),
     parsePipeline()
   ]);
-  const items = [...applications, ...reports, ...pipeline];
+  const linkedReports = new Set(applications.map((item) => item.reportFile).filter(Boolean));
+  const untrackedReports = reports.filter((report) => !linkedReports.has(report.reportFile));
+  const items = [...applications, ...untrackedReports, ...pipeline];
   return {
     root: CAREER_OPS_ROOT,
     settings: {
@@ -425,7 +462,7 @@ async function addPipelineUrl(url) {
   const filePath = path.join(dataDir, "pipeline.md");
   await fs.mkdir(dataDir, { recursive: true });
   const existing = await readTextIfExists(filePath);
-  const line = `${new Date().toISOString().slice(0, 10)}\t${parsed.href}\tmanual\tAdded from local UI\n`;
+  const line = `- [ ] ${parsed.href} | Manual | Unreviewed role | | Added from local UI\n`;
   await fs.writeFile(filePath, existing ? `${existing.replace(/\s*$/, "\n")}${line}` : line, "utf8");
 }
 
