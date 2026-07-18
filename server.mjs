@@ -199,6 +199,7 @@ async function loadPersistedJobs() {
       ...savedJob,
       status: savedJob.status === "running" ? "interrupted" : savedJob.status
     };
+    if (job.logs) updateJobProgressFromLog(job, job.logs);
     jobs.set(job.id, job);
     nextJobId = Math.max(nextJobId, Number(job.id) + 1);
   }
@@ -526,7 +527,7 @@ function updateJobProgressFromLog(job, text) {
     const index = Number(match[1]);
     const total = Number(match[2]);
     job.progress = {
-      current: Math.max(job.progress?.current || 0, index - 1),
+      current: Math.max(job.progress?.current || 0, index),
       total,
       label: match[3].trim()
     };

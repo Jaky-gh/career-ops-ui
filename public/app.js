@@ -118,7 +118,7 @@ function dateSortValue(value) {
 function applyReadyItems() {
   return state.items
     .filter((item) => item.source === "tracker")
-    .filter((item) => typeof item.score === "number" && item.score >= 4.5)
+    .filter((item) => typeof item.score === "number" && item.score >= 4)
     .filter((item) => !["Applied", "Rejected", "Discarded", "Skip"].includes(item.status));
 }
 
@@ -216,7 +216,7 @@ function renderWorkflow() {
         <button data-mark-applied="${escapeHtml(item.trackerNum || "")}" ${item.trackerNum ? "" : "disabled"}>Applied</button>
       </div>
     </article>
-  `).join("") : '<div class="empty-state">No high-scoring unapplied jobs yet. Fetch jobs, grade the pipeline, then add graded jobs to history.</div>';
+  `).join("") : '<div class="empty-state">No 4.0+ unapplied jobs yet. Fetch jobs, grade the pipeline, then add graded jobs to history.</div>';
 }
 
 function renderWorkflowProgress(jobs = []) {
