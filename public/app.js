@@ -7,6 +7,7 @@ const state = {
 
 const els = {
   repoRoot: document.querySelector("#repoRoot"),
+  settingsSource: document.querySelector("#settingsSource"),
   healthStatus: document.querySelector("#healthStatus"),
   searchInput: document.querySelector("#searchInput"),
   statusFilter: document.querySelector("#statusFilter"),
@@ -210,6 +211,7 @@ function render() {
 async function loadHealth() {
   state.health = await api("/api/health");
   els.repoRoot.textContent = state.health.root;
+  els.settingsSource.textContent = `Settings: ${state.health.settings.sources.join(" + ")}`;
   if (!state.health.exists) {
     els.healthStatus.textContent = "career-ops checkout not found";
   } else if (state.health.missing.length) {

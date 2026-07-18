@@ -81,6 +81,7 @@ button {
 .brand p,
 .health-card,
 .repo-root,
+.settings-source,
 .health-status {
   color: #c8d6cf;
 }
@@ -109,6 +110,12 @@ button {
 
 .health-status {
   font-size: 13px;
+}
+
+.settings-source {
+  overflow-wrap: anywhere;
+  margin-bottom: 8px;
+  font-size: 11px;
 }
 
 .nav-stack {
