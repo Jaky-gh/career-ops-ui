@@ -29,6 +29,7 @@
           <button class="nav-item" data-view="history">History</button>
           <button class="nav-item" data-view="pipeline">Pipeline</button>
           <button class="nav-item" data-view="commands">Commands</button>
+          <button class="nav-item" data-view="guide">Guide</button>
         </nav>
       </aside>
 
@@ -177,6 +178,66 @@
             </div>
             <div id="jobsList" class="jobs-list"></div>
           </section>
+        </section>
+
+        <section id="guideView" class="view">
+          <div class="section-head">
+            <div>
+              <h2>How to Use Career-Ops</h2>
+              <p>A quick reference for reviewing opportunities and keeping the tracker current.</p>
+            </div>
+          </div>
+
+          <div class="guide-layout">
+            <section class="guide-panel">
+              <div class="guide-step">1</div>
+              <div>
+                <h3>Check the workspace</h3>
+                <p>The sidebar shows which <code>career-ops</code> checkout is connected. If the path is wrong, update <code>settings.local.json</code> and restart the server.</p>
+                <code>node server.mjs</code>
+              </div>
+            </section>
+
+            <section class="guide-panel">
+              <div class="guide-step">2</div>
+              <div>
+                <h3>Review applications</h3>
+                <p>Use Applications for the working list. Search across company, role, status, location, and notes; use filters when you want only applied roles, skips, or pipeline items.</p>
+              </div>
+            </section>
+
+            <section class="guide-panel">
+              <div class="guide-step">3</div>
+              <div>
+                <h3>Open details and reports</h3>
+                <p>Select any row to inspect the notes panel. Use Open Posting for the job URL and View Report for the evaluation write-up linked from <code>applications.md</code>.</p>
+              </div>
+            </section>
+
+            <section class="guide-panel">
+              <div class="guide-step">4</div>
+              <div>
+                <h3>Use History for status checks</h3>
+                <p>History shows tracker records sorted by date. Click a status card to jump back to Applications filtered to that status.</p>
+              </div>
+            </section>
+
+            <section class="guide-panel">
+              <div class="guide-step">5</div>
+              <div>
+                <h3>Queue new postings</h3>
+                <p>Pipeline is for jobs that still need evaluation. Paste a posting URL and queue it, or run the job scan when you want <code>career-ops</code> to find candidates.</p>
+              </div>
+            </section>
+
+            <section class="guide-panel">
+              <div class="guide-step">6</div>
+              <div>
+                <h3>Run maintenance commands</h3>
+                <p>Commands runs local scripts from the connected checkout. Start with Doctor when setup looks off, then use verify, merge, dedup, and normalize to keep data tidy.</p>
+              </div>
+            </section>
+          </div>
         </section>
       </main>
     </div>

@@ -583,6 +583,67 @@ dd {
   white-space: pre-wrap;
 }
 
+.guide-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.guide-panel {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  min-height: 150px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.guide-step {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #dff2e4;
+  color: var(--good);
+  font-weight: 800;
+}
+
+.guide-panel h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.guide-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.guide-panel > div > code {
+  display: inline-block;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbf8;
+  padding: 6px 8px;
+  color: var(--accent-3);
+  font-size: 12px;
+}
+
+.guide-panel p code {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f9fbf8;
+  padding: 1px 4px;
+  color: var(--accent-3);
+  font-size: 12px;
+}
+
 .empty-state {
   padding: 32px;
   color: var(--muted);
@@ -643,6 +704,10 @@ dd {
   }
 
   .history-item {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-panel {
     grid-template-columns: 1fr;
   }
 
