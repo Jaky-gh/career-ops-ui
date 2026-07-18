@@ -31,13 +31,6 @@ const DEFAULT_SETTINGS = {
       when: "Run when you want fresh jobs to grade.",
       effect: "Writes new pending pipeline entries and scan history."
     },
-    grade: {
-      label: "Grade Pipeline",
-      command: ["node", "openrouter-runner.mjs", "pipeline"],
-      description: "Grades each pending pipeline job with OpenRouter and saves evaluation reports.",
-      when: "Run after fetching or queueing jobs. Use smaller batches when possible.",
-      effect: "Writes reports, tracker additions, and marks processed pipeline rows."
-    },
     verify: {
       label: "Verify Pipeline",
       command: ["node", "verify-pipeline.mjs"],
@@ -146,14 +139,14 @@ const codexPipelinePrompt = [
   "Do not submit applications."
 ].join(" ");
 const actionSettings = {
-  "grade-codex": {
-    label: "Grade with Codex",
+  ...(settings.actions || {}),
+  grade: {
+    label: "Grade Pipeline",
     command: [CODEX_COMMAND, "exec", "--sandbox", "danger-full-access", "--cd", CAREER_OPS_ROOT, codexPipelinePrompt],
-    description: "Grades pending jobs by running the Career-Ops pipeline mode through Codex instead of OpenRouter.",
-    when: "Use this when OpenRouter is out of credits or you want the ChatGPT/Codex route.",
+    description: "Grades pending jobs by running the Career-Ops pipeline mode through Codex.",
+    when: "Run after fetching or queueing jobs.",
     effect: "Uses your Codex/OpenAI account to write reports, tracker additions, and processed pipeline updates."
-  },
-  ...(settings.actions || {})
+  }
 };
 const ACTIONS = Object.fromEntries(Object.entries(actionSettings).map(([id, action]) => [
   id,
@@ -211,8 +204,8 @@ function serializeJob(job) {
 function hasFatalCommandOutput(job) {
   const logs = job.logs || "";
   const hasSavedReport = /Report saved:/i.test(logs);
-  const openRouterBlocked = /OPENROUTER_API_KEY not found|Insufficient credits|All\s+\d+\s+active models failed/i.test(logs);
-  return job.action === "grade" && openRouterBlocked && !hasSavedReport;
+  const providerBlocked = /API_KEY not found|Insufficient credits|All\s+\d+\s+active models failed/i.test(logs);
+  return job.action === "grade" && providerBlocked && !hasSavedReport;
 }
 
 function inferFinishedStatus(job, exitCode = job.exitCode) {

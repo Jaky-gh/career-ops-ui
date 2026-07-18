@@ -22,13 +22,6 @@
       "when": "Run when you want fresh jobs to grade.",
       "effect": "Writes new pending pipeline entries and scan history."
     },
-    "grade": {
-      "label": "Grade Pipeline",
-      "command": ["node", "openrouter-runner.mjs", "pipeline"],
-      "description": "Grades each pending pipeline job with OpenRouter and saves evaluation reports.",
-      "when": "Run after fetching or queueing jobs. Use smaller batches when possible.",
-      "effect": "Writes reports, tracker additions, and marks processed pipeline rows."
-    },
     "verify": {
       "label": "Verify Pipeline",
       "command": ["node", "verify-pipeline.mjs"],
