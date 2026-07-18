@@ -681,9 +681,17 @@ dd {
 .job-meta {
   display: flex;
   justify-content: space-between;
+  align-items: start;
   gap: 12px;
   padding: 12px;
   background: #f9fbf8;
+}
+
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .job-progress {

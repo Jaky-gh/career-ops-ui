@@ -365,7 +365,10 @@ async function renderJobs() {
           <strong>${escapeHtml(job.label)}</strong>
           <div class="eyebrow">${escapeHtml(job.status)} / exit ${job.exitCode ?? "pending"}</div>
         </div>
-        <button class="secondary-button" data-cancel="${escapeHtml(job.id)}" ${job.status === "running" ? "" : "disabled"}>Cancel</button>
+        <div class="job-actions">
+          <button class="secondary-button" data-copy-job-log="${escapeHtml(job.id)}">Copy Log</button>
+          <button class="secondary-button" data-cancel="${escapeHtml(job.id)}" ${job.status === "running" ? "" : "disabled"}>Cancel</button>
+        </div>
       </div>
       ${renderJobProgress(job)}
       <pre class="job-log">${escapeHtml(job.logs || "Waiting for command output...")}</pre>
@@ -473,6 +476,31 @@ async function tailorResume(trackerNum) {
   await renderJobs();
 }
 
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+async function copyJobLog(jobId) {
+  const { jobs } = await api("/api/jobs");
+  const job = jobs.find((item) => item.id === jobId);
+  if (!job) throw new Error("Command log not found.");
+  await copyText(job.logs || "");
+  toast("Command log copied");
+}
+
 document.addEventListener("click", async (event) => {
   const row = event.target.closest("[data-id]");
   if (row && !event.target.matches("button")) {
@@ -500,6 +528,9 @@ document.addEventListener("click", async (event) => {
 
   const tailorResumeId = event.target.dataset.tailorResume;
   if (tailorResumeId) tailorResume(tailorResumeId).catch((error) => toast(error.message));
+
+  const copyJobLogId = event.target.dataset.copyJobLog;
+  if (copyJobLogId) copyJobLog(copyJobLogId).catch((error) => toast(error.message));
 
   if (event.target.dataset.showReady) {
     showView("applications");
