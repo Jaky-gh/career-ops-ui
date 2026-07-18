@@ -549,6 +549,16 @@ function updateJobProgressFromLog(job, text) {
     };
   }
 
+  const codexProcessed = text.match(/Processed\s+`?data\/pipeline\.md`?[\s\S]*?Wrote\s+(\d+)\s+evaluation reports/i);
+  if (job.action === "grade" && codexProcessed) {
+    const total = Number(codexProcessed[1]);
+    job.progress = {
+      current: total,
+      total,
+      label: "Pipeline grading complete"
+    };
+  }
+
   for (const match of text.matchAll(/\[(\d+)\/(\d+)\]\s+([^\n]+)/g)) {
     const index = Number(match[1]);
     const total = Number(match[2]);

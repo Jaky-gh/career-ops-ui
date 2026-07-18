@@ -95,7 +95,9 @@ export function renderWorkflow() {
 }
 
 export function renderWorkflowProgress(jobs = []) {
-  const gradeJob = jobs.find((job) => job.action === "grade") || jobs.find((job) => job.progress?.total);
+  const gradeJob = jobs.find((job) => job.action === "grade" && job.progress?.total)
+    || jobs.find((job) => job.action === "grade")
+    || jobs.find((job) => job.progress?.total);
   els.workflowProgressPanel.classList.toggle("hidden", !gradeJob);
   if (!gradeJob) return;
 
@@ -203,7 +205,9 @@ export function renderCommands() {
         <div><dt>When</dt><dd>${escapeHtml(detail.when || "Use when this step is needed.")}</dd></div>
         <div><dt>Effect</dt><dd>${escapeHtml(detail.effect || "See command output for details.")}</dd></div>
       </dl>
-      <button class="primary-button command-button" data-action="${escapeHtml(action)}">Run</button>
+      <div class="command-card-footer">
+        <button class="primary-button command-button" data-action="${escapeHtml(action)}">Run</button>
+      </div>
     </div>
   `;
   }).join("");

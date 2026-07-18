@@ -683,8 +683,8 @@ dd {
 
 .command-card {
   display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: 12px;
-  align-content: start;
   min-height: 260px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -705,8 +705,18 @@ dd {
 
 .command-docs {
   display: grid;
+  align-content: start;
   gap: 8px;
   margin: 0;
+}
+
+.command-card-footer {
+  display: flex;
+  align-items: end;
+}
+
+.command-card-footer .command-button {
+  width: 100%;
 }
 
 .command-docs div {
