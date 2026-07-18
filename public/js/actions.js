@@ -1,7 +1,7 @@
 import { api, toast } from "./api.js";
 import { els } from "./dom.js";
 import { state } from "./state.js";
-import { render, renderJobsList } from "./render.js";
+import { closeLogModal, render, renderJobsList, renderLogModal } from "./render.js";
 
 export async function renderJobs() {
   const { jobs } = await api("/api/jobs");
@@ -121,6 +121,21 @@ export async function copyJobLog(jobId) {
   await copyText(job.logs || "");
   toast("Command log copied");
 }
+
+export async function viewJobLog(jobId) {
+  const { jobs } = await api("/api/jobs");
+  const job = jobs.find((item) => item.id === jobId);
+  if (!job) throw new Error("Command log not found.");
+  renderLogModal(job);
+}
+
+export async function copyOpenJobLog() {
+  const jobId = els.logModal.dataset.jobId;
+  if (!jobId) return;
+  await copyJobLog(jobId);
+}
+
+export { closeLogModal };
 
 export async function addPipelineUrl(url) {
   await api("/api/pipeline", {

@@ -44,5 +44,12 @@ export const els = {
   refreshJobsButton: document.querySelector("#refreshJobsButton"),
   addUrlForm: document.querySelector("#addUrlForm"),
   urlInput: document.querySelector("#urlInput"),
+  logModal: document.querySelector("#logModal"),
+  logModalTitle: document.querySelector("#logModalTitle"),
+  logModalStatus: document.querySelector("#logModalStatus"),
+  logModalMeta: document.querySelector("#logModalMeta"),
+  logModalBody: document.querySelector("#logModalBody"),
+  logModalCloseButton: document.querySelector("#logModalCloseButton"),
+  logModalCopyButton: document.querySelector("#logModalCopyButton"),
   toast: document.querySelector("#toast")
 };

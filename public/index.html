@@ -323,6 +323,24 @@
       </main>
     </div>
 
+    <div id="logModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="logModalTitle">
+      <section class="log-modal">
+        <header class="log-modal-head">
+          <div>
+            <div id="logModalStatus" class="log-modal-status"></div>
+            <h2 id="logModalTitle">Command Log</h2>
+            <p id="logModalMeta" class="eyebrow"></p>
+          </div>
+          <button id="logModalCloseButton" class="icon-button" type="button" aria-label="Close command log">Close</button>
+        </header>
+        <pre id="logModalBody" class="log-modal-body"></pre>
+        <footer class="log-modal-footer">
+          <button id="logModalCopyButton" class="primary-button" type="button">Copy Log</button>
+          <button class="secondary-button" type="button" data-close-log-modal="true">Close</button>
+        </footer>
+      </section>
+    </div>
+
     <div id="toast" class="toast hidden"></div>
     <script src="/app.js" type="module"></script>
   </body>

@@ -1,6 +1,8 @@
 import { api, toast } from "./js/api.js";
 import {
   addPipelineUrl,
+  closeLogModal,
+  copyOpenJobLog,
   copyJobLog,
   markApplied,
   openItem,
@@ -9,7 +11,8 @@ import {
   runCommand,
   showView,
   skipJob,
-  tailorResume
+  tailorResume,
+  viewJobLog
 } from "./js/actions.js";
 import { els } from "./js/dom.js";
 import { renderApplications, renderDetail, renderHistory, renderWorkflow } from "./js/render.js";
@@ -46,6 +49,13 @@ document.addEventListener("click", async (event) => {
   const copyJobLogId = event.target.dataset.copyJobLog;
   if (copyJobLogId) copyJobLog(copyJobLogId).catch((error) => toast(error.message));
 
+  const viewJobLogId = event.target.dataset.viewJobLog;
+  if (viewJobLogId) viewJobLog(viewJobLogId).catch((error) => toast(error.message));
+
+  if (event.target.dataset.closeLogModal || event.target === els.logModal) {
+    closeLogModal();
+  }
+
   if (event.target.dataset.showReady) {
     showView("applications");
     els.statusFilter.value = "all";
@@ -65,6 +75,15 @@ document.addEventListener("click", async (event) => {
   if (cancelId) {
     await api(`/api/jobs/${cancelId}/cancel`, { method: "POST" });
     await renderJobs();
+  }
+});
+
+els.logModalCloseButton.addEventListener("click", closeLogModal);
+els.logModalCopyButton.addEventListener("click", () => copyOpenJobLog().catch((error) => toast(error.message)));
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !els.logModal.classList.contains("hidden")) {
+    closeLogModal();
   }
 });
 

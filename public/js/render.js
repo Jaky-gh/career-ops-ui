@@ -248,6 +248,7 @@ export function renderJobsList(jobs) {
           <div class="eyebrow">exit ${job.exitCode ?? "pending"}</div>
         </div>
         <div class="job-actions">
+          <button class="secondary-button" data-view-job-log="${escapeHtml(job.id)}">View Log</button>
           <button class="secondary-button" data-copy-job-log="${escapeHtml(job.id)}">Copy Log</button>
           <button class="secondary-button" data-cancel="${escapeHtml(job.id)}" ${job.status === "running" ? "" : "disabled"}>Cancel</button>
         </div>
@@ -256,6 +257,26 @@ export function renderJobsList(jobs) {
       <pre class="job-log">${escapeHtml(job.logs || "Waiting for command output...")}</pre>
     </article>
   `).join("") : '<div class="empty-state">No commands have run in this UI session.</div>';
+}
+
+export function renderLogModal(job) {
+  els.logModalTitle.textContent = job.label || "Command Log";
+  els.logModalStatus.innerHTML = `
+    <span class="job-status ${jobStatusClass(job.status)}">
+      <span class="job-status-dot"></span>
+      ${escapeHtml(job.status || "unknown")}
+    </span>
+  `;
+  els.logModalMeta.textContent = `exit ${job.exitCode ?? "pending"} / ${job.command || "command unavailable"}`;
+  els.logModalBody.textContent = job.logs || "Waiting for command output...";
+  els.logModal.dataset.jobId = job.id;
+  els.logModal.classList.remove("hidden");
+}
+
+export function closeLogModal() {
+  els.logModal.classList.add("hidden");
+  els.logModal.removeAttribute("data-job-id");
+  els.logModalBody.textContent = "";
 }
 
 export function render() {

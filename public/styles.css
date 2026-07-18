@@ -878,6 +878,71 @@ dd {
   white-space: pre-wrap;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(12, 20, 17, 0.62);
+}
+
+.log-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1100px, 100%);
+  max-height: min(820px, calc(100vh - 48px));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 28px 80px rgba(8, 12, 10, 0.32);
+}
+
+.log-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  background: #f9fbf8;
+}
+
+.log-modal-head h2 {
+  margin: 6px 0 4px;
+  font-size: 20px;
+}
+
+.log-modal-status {
+  min-height: 24px;
+}
+
+.log-modal .eyebrow {
+  overflow-wrap: anywhere;
+}
+
+.log-modal-body {
+  min-height: 360px;
+  overflow: auto;
+  margin: 0;
+  padding: 16px;
+  background: #101817;
+  color: #e7f2eb;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.log-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+}
+
 .guide-layout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1010,5 +1075,19 @@ dd {
 
   .table-panel {
     overflow-x: auto;
+  }
+
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .log-modal-head,
+  .log-modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .log-modal-body {
+    min-height: 280px;
   }
 }
