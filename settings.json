@@ -8,13 +8,61 @@
     "portals.yml"
   ],
   "actions": {
-    "doctor": { "label": "Doctor", "command": ["node", "doctor.mjs"] },
-    "scan": { "label": "Search New Jobs", "command": ["node", "scan.mjs"] },
-    "grade": { "label": "Grade Pipeline", "command": ["node", "openrouter-runner.mjs", "pipeline"] },
-    "verify": { "label": "Verify Pipeline", "command": ["node", "verify-pipeline.mjs"] },
-    "merge": { "label": "Merge Tracker", "command": ["node", "merge-tracker.mjs"] },
-    "dedup": { "label": "Deduplicate Tracker", "command": ["node", "dedup-tracker.mjs", "--dry-run"] },
-    "normalize": { "label": "Normalize Statuses", "command": ["node", "normalize-statuses.mjs", "--dry-run"] },
-    "liveness": { "label": "Check Liveness", "command": ["node", "check-liveness.mjs"] }
+    "doctor": {
+      "label": "Doctor",
+      "command": ["node", "doctor.mjs"],
+      "description": "Checks whether the connected career-ops checkout is configured correctly.",
+      "when": "Run this first when setup looks broken or commands fail unexpectedly.",
+      "effect": "Read-only health check."
+    },
+    "scan": {
+      "label": "Search New Jobs",
+      "command": ["node", "scan.mjs"],
+      "description": "Scans configured job portals and queues matching postings in data/pipeline.md.",
+      "when": "Run when you want fresh jobs to grade.",
+      "effect": "Writes new pending pipeline entries and scan history."
+    },
+    "grade": {
+      "label": "Grade Pipeline",
+      "command": ["node", "openrouter-runner.mjs", "pipeline"],
+      "description": "Grades each pending pipeline job with OpenRouter and saves evaluation reports.",
+      "when": "Run after fetching or queueing jobs. Use smaller batches when possible.",
+      "effect": "Writes reports, tracker additions, and marks processed pipeline rows."
+    },
+    "verify": {
+      "label": "Verify Pipeline",
+      "command": ["node", "verify-pipeline.mjs"],
+      "description": "Checks tracker and pipeline integrity: statuses, reports, PDFs, duplicates, and pending merge files.",
+      "when": "Run after grading, merging, or hand-editing tracker data.",
+      "effect": "Read-only validation."
+    },
+    "merge": {
+      "label": "Merge Tracker",
+      "command": ["node", "merge-tracker.mjs"],
+      "description": "Moves generated tracker additions into data/applications.md.",
+      "when": "Run after Grade Pipeline creates evaluated jobs that should appear in History.",
+      "effect": "Updates application history and archives merged additions."
+    },
+    "dedup": {
+      "label": "Deduplicate Tracker",
+      "command": ["node", "dedup-tracker.mjs", "--dry-run"],
+      "description": "Finds likely duplicate application tracker rows without changing files.",
+      "when": "Run when the same company or role appears multiple times.",
+      "effect": "Dry-run only."
+    },
+    "normalize": {
+      "label": "Normalize Statuses",
+      "command": ["node", "normalize-statuses.mjs", "--dry-run"],
+      "description": "Finds non-standard statuses and shows how they would be normalized.",
+      "when": "Run when filters or history counts look inconsistent.",
+      "effect": "Dry-run only."
+    },
+    "liveness": {
+      "label": "Check Liveness",
+      "command": ["node", "check-liveness.mjs"],
+      "description": "Checks whether job posting URLs still appear active.",
+      "when": "Run before grading a large queue to avoid wasting model calls on closed postings.",
+      "effect": "Read-only URL check unless called with file-specific options outside the UI."
+    }
   }
 }

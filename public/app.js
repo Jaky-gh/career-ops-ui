@@ -314,13 +314,24 @@ function renderDetail() {
 
 function renderCommands() {
   if (!state.health) return;
-  els.commandGrid.innerHTML = Object.entries(state.health.actions).map(([action, label]) => `
+  const details = state.health.actionDetails || {};
+  els.commandGrid.innerHTML = Object.entries(state.health.actions).map(([action, label]) => {
+    const detail = details[action] || {};
+    return `
     <div class="command-card">
-      <strong>${escapeHtml(label)}</strong>
+      <div>
+        <strong>${escapeHtml(detail.label || label)}</strong>
+        <p>${escapeHtml(detail.description || "Run this career-ops command.")}</p>
+      </div>
       <span class="eyebrow">${escapeHtml(action)}</span>
+      <dl class="command-docs">
+        <div><dt>When</dt><dd>${escapeHtml(detail.when || "Use when this step is needed.")}</dd></div>
+        <div><dt>Effect</dt><dd>${escapeHtml(detail.effect || "See command output for details.")}</dd></div>
+      </dl>
       <button class="primary-button command-button" data-action="${escapeHtml(action)}">Run</button>
     </div>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function renderJobProgress(job) {

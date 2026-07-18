@@ -620,15 +620,16 @@ dd {
 
 .command-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
 
 .command-card {
   display: grid;
-  gap: 10px;
-  min-height: 112px;
+  gap: 12px;
+  align-content: start;
+  min-height: 260px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -638,6 +639,31 @@ dd {
 
 .command-card strong {
   font-size: 15px;
+}
+
+.command-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.command-docs {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.command-docs div {
+  display: grid;
+  gap: 3px;
+}
+
+.command-docs dd {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  text-align: left;
 }
 
 .jobs-list {
