@@ -1,0 +1,19 @@
+{
+  "port": 5177,
+  "careerOpsPath": "../career-ops",
+  "requiredFiles": [
+    "cv.md",
+    "config/profile.yml",
+    "modes/_profile.md",
+    "portals.yml"
+  ],
+  "actions": {
+    "doctor": { "label": "Doctor", "command": ["node", "doctor.mjs"] },
+    "scan": { "label": "Search New Jobs", "command": ["node", "scan.mjs"] },
+    "verify": { "label": "Verify Pipeline", "command": ["node", "verify-pipeline.mjs"] },
+    "merge": { "label": "Merge Tracker", "command": ["node", "merge-tracker.mjs"] },
+    "dedup": { "label": "Deduplicate Tracker", "command": ["node", "dedup-tracker.mjs", "--dry-run"] },
+    "normalize": { "label": "Normalize Statuses", "command": ["node", "normalize-statuses.mjs", "--dry-run"] },
+    "liveness": { "label": "Check Liveness", "command": ["node", "check-liveness.mjs"] }
+  }
+}

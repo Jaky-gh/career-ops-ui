@@ -5,22 +5,91 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT || 5177);
-const CAREER_OPS_ROOT = path.resolve(process.env.CAREER_OPS_PATH || path.join(__dirname, "..", "career-ops"));
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 const jobs = new Map();
 let nextJobId = 1;
 
-const ACTIONS = {
-  doctor: { label: "Doctor", command: [process.execPath, ["doctor.mjs"]] },
-  scan: { label: "Search New Jobs", command: [process.execPath, ["scan.mjs"]] },
-  verify: { label: "Verify Pipeline", command: [process.execPath, ["verify-pipeline.mjs"]] },
-  merge: { label: "Merge Tracker", command: [process.execPath, ["merge-tracker.mjs"]] },
-  dedup: { label: "Deduplicate Tracker", command: [process.execPath, ["dedup-tracker.mjs", "--dry-run"]] },
-  normalize: { label: "Normalize Statuses", command: [process.execPath, ["normalize-statuses.mjs", "--dry-run"]] },
-  liveness: { label: "Check Liveness", command: [process.execPath, ["check-liveness.mjs"]] }
+const DEFAULT_SETTINGS = {
+  port: 5177,
+  careerOpsPath: "../career-ops",
+  requiredFiles: ["cv.md", "config/profile.yml", "modes/_profile.md", "portals.yml"],
+  actions: {
+    doctor: { label: "Doctor", command: ["node", "doctor.mjs"] },
+    scan: { label: "Search New Jobs", command: ["node", "scan.mjs"] },
+    verify: { label: "Verify Pipeline", command: ["node", "verify-pipeline.mjs"] },
+    merge: { label: "Merge Tracker", command: ["node", "merge-tracker.mjs"] },
+    dedup: { label: "Deduplicate Tracker", command: ["node", "dedup-tracker.mjs", "--dry-run"] },
+    normalize: { label: "Normalize Statuses", command: ["node", "normalize-statuses.mjs", "--dry-run"] },
+    liveness: { label: "Check Liveness", command: ["node", "check-liveness.mjs"] }
+  }
 };
+
+async function loadJsonIfExists(filePath) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw new Error(`Could not load settings from ${filePath}: ${error.message}`);
+  }
+}
+
+function mergeSettings(base, override = {}) {
+  return {
+    ...base,
+    ...override,
+    requiredFiles: override.requiredFiles || base.requiredFiles,
+    actions: {
+      ...(base.actions || {}),
+      ...(override.actions || {})
+    }
+  };
+}
+
+async function loadSettings() {
+  const configuredPaths = [
+    process.env.CAREER_OPS_UI_SETTINGS,
+    path.join(__dirname, "settings.json"),
+    path.join(__dirname, "settings.local.json")
+  ].filter(Boolean);
+
+  let settings = DEFAULT_SETTINGS;
+  const sources = ["built-in defaults"];
+  for (const settingsPath of configuredPaths) {
+    const loaded = await loadJsonIfExists(path.resolve(settingsPath));
+    if (!loaded) continue;
+    settings = mergeSettings(settings, loaded);
+    sources.push(path.resolve(settingsPath));
+  }
+
+  if (process.env.CAREER_OPS_PATH) {
+    settings = { ...settings, careerOpsPath: process.env.CAREER_OPS_PATH };
+    sources.push("CAREER_OPS_PATH");
+  }
+  if (process.env.PORT) {
+    settings = { ...settings, port: Number(process.env.PORT) };
+    sources.push("PORT");
+  }
+
+  return { ...settings, sources };
+}
+
+function resolveFromProject(value) {
+  return path.resolve(__dirname, value || ".");
+}
+
+function normalizeCommand(command) {
+  const [cmd, ...args] = Array.isArray(command) ? command : String(command || "").split(/\s+/).filter(Boolean);
+  return [cmd === "node" ? process.execPath : cmd, args];
+}
+
+const settings = await loadSettings();
+const PORT = Number(settings.port || 5177);
+const CAREER_OPS_ROOT = resolveFromProject(settings.careerOpsPath);
+const ACTIONS = Object.fromEntries(Object.entries(settings.actions || {}).map(([id, action]) => [
+  id,
+  { label: action.label || id, command: normalizeCommand(action.command) }
+]));
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -276,18 +345,27 @@ async function getData() {
   const items = [...applications, ...reports, ...pipeline];
   return {
     root: CAREER_OPS_ROOT,
+    settings: {
+      sources: settings.sources,
+      careerOpsPath: settings.careerOpsPath
+    },
     hasData: items.length > 0,
     items: items.length > 0 ? items : sampleApplications()
   };
 }
 
 async function getHealth() {
-  const required = ["cv.md", "config/profile.yml", "modes/_profile.md", "portals.yml"];
+  const required = settings.requiredFiles || [];
   const missing = required.filter((rel) => !existsSync(path.join(CAREER_OPS_ROOT, ...rel.split("/"))));
   return {
     root: CAREER_OPS_ROOT,
     exists: existsSync(CAREER_OPS_ROOT),
     missing,
+    settings: {
+      sources: settings.sources,
+      careerOpsPath: settings.careerOpsPath,
+      requiredFiles: required
+    },
     actions: Object.fromEntries(Object.entries(ACTIONS).map(([id, action]) => [id, action.label]))
   };
 }
@@ -383,6 +461,17 @@ async function handleApi(req, res) {
       return sendJson(res, 200, await getData());
     }
 
+    if (req.method === "GET" && url.pathname === "/api/settings") {
+      return sendJson(res, 200, {
+        root: CAREER_OPS_ROOT,
+        port: PORT,
+        careerOpsPath: settings.careerOpsPath,
+        requiredFiles: settings.requiredFiles,
+        actionIds: Object.keys(ACTIONS),
+        sources: settings.sources
+      });
+    }
+
     if (req.method === "GET" && url.pathname.startsWith("/api/reports/")) {
       const file = path.basename(decodeURIComponent(url.pathname.replace("/api/reports/", "")));
       const filePath = path.join(CAREER_OPS_ROOT, "reports", file);
@@ -442,4 +531,5 @@ const server = createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Career-Ops Local UI: http://localhost:${PORT}`);
   console.log(`career-ops root: ${CAREER_OPS_ROOT}`);
+  console.log(`settings: ${settings.sources.join(", ")}`);
 });
