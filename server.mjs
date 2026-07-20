@@ -138,6 +138,19 @@ const codexPipelinePrompt = [
   "Write evaluation reports, tracker additions, and processed pipeline updates.",
   "Do not submit applications."
 ].join(" ");
+
+function codexSinglePipelinePrompt(item) {
+  return [
+    "Run career-ops pipeline mode for one selected pending job from data/pipeline.md.",
+    `Selected URL: ${item.url}`,
+    `Selected company: ${item.company || "Unknown"}`,
+    `Selected role: ${item.role || "Unreviewed role"}`,
+    "Process exactly this selected URL and do not process other pending URLs.",
+    "Write the evaluation report, tracker addition, and processed pipeline update for this selected job only.",
+    "Do not submit applications."
+  ].join(" ");
+}
+
 const actionSettings = {
   ...(settings.actions || {}),
   grade: {
@@ -423,6 +436,17 @@ function countPipelineRows() {
   };
 }
 
+function pendingPipelineItems() {
+  const markdown = readTextSyncIfExists(path.join(CAREER_OPS_ROOT, "data", "pipeline.md"));
+  return parsePipelineCheckboxes(markdown);
+}
+
+function findPendingPipelineItem(url) {
+  const normalizedUrl = String(url || "").trim();
+  if (!normalizedUrl) return null;
+  return pendingPipelineItems().find((item) => item.url === normalizedUrl) || null;
+}
+
 function hasPipelineTaskRows(markdown) {
   return /^\s*-\s+\[[ xX!]\]\s+/m.test(markdown);
 }
@@ -607,7 +631,19 @@ function updateJobProgressFromLog(job, text) {
 }
 
 function updateGradeProgressFromPipeline(job) {
-  if (job.action !== "grade") return;
+  if (!["grade", "grade-single"].includes(job.action)) return;
+  if (job.action === "grade-single" && job.targetUrl) {
+    const stillPending = Boolean(findPendingPipelineItem(job.targetUrl));
+    job.progress = {
+      current: stillPending ? 0 : 1,
+      total: 1,
+      label: stillPending
+        ? job.progress?.label || "Grading selected job"
+        : "Selected job grading complete"
+    };
+    return;
+  }
+
   const rows = countPipelineRows();
   const remaining = rows.pending;
   if (!job.progress?.total) {
@@ -657,14 +693,17 @@ function startProcessJob(actionId, action, cwd = CAREER_OPS_ROOT) {
     updatedAt: new Date().toISOString(),
     exitCode: null
   };
-  if (actionId === "grade") {
-    const total = countPipelineRows().pending;
+  if (actionId === "grade" || actionId === "grade-single") {
+    const total = actionId === "grade-single" ? 1 : countPipelineRows().pending;
     job.progress = {
       current: 0,
       total,
-      label: total ? "Preparing grading run" : "No pending jobs to grade"
+      label: actionId === "grade-single"
+        ? "Grading selected job"
+        : total ? "Preparing grading run" : "No pending jobs to grade"
     };
   }
+  if (action.targetUrl) job.targetUrl = action.targetUrl;
   jobs.set(id, job);
   void persistJobs();
 
@@ -704,6 +743,19 @@ function startJob(actionId) {
   const action = ACTIONS[actionId];
   if (!action) throw new Error(`Unknown action: ${actionId}`);
   return startProcessJob(actionId, action);
+}
+
+function startSinglePipelineGradeJob(url) {
+  const item = findPendingPipelineItem(url);
+  if (!item) throw new Error("Pipeline job is not pending or could not be found.");
+  return startProcessJob("grade-single", {
+    label: `Grade: ${item.company}`,
+    command: normalizeCommand([CODEX_COMMAND, "exec", "--sandbox", "danger-full-access", "--cd", CAREER_OPS_ROOT, codexSinglePipelinePrompt(item)]),
+    targetUrl: item.url,
+    description: "Grades one selected pending pipeline job through Codex.",
+    when: "Run from a specific row in Pipeline Review.",
+    effect: "Writes one evaluation report, one tracker addition, and marks the selected pipeline row processed."
+  });
 }
 
 async function startTailorResumeJob(trackerNum) {
@@ -848,6 +900,12 @@ async function handleApi(req, res) {
       const body = await readBody(req);
       await addPipelineUrl(body.url);
       return sendJson(res, 201, { ok: true });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/pipeline/grade") {
+      const body = await readBody(req);
+      const job = startSinglePipelineGradeJob(body.url);
+      return sendJson(res, 202, { ...job, child: undefined });
     }
 
     if (req.method === "POST" && url.pathname.match(/^\/api\/applications\/[^/]+\/status$/)) {

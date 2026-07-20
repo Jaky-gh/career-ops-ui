@@ -5,6 +5,7 @@ import {
   copyLatestJobLog,
   copyOpenJobLog,
   copyJobLog,
+  gradePipelineJob,
   markApplied,
   openItem,
   refreshAll,
@@ -38,6 +39,9 @@ document.addEventListener("click", async (event) => {
 
   const action = event.target.dataset.action;
   if (action) runCommand(action).catch((error) => toast(error.message));
+
+  const gradePipelineUrl = event.target.dataset.gradePipelineUrl;
+  if (gradePipelineUrl) gradePipelineJob(gradePipelineUrl).catch((error) => toast(error.message));
 
   const markAppliedId = event.target.dataset.markApplied;
   if (markAppliedId) markApplied(markAppliedId).catch((error) => toast(error.message));

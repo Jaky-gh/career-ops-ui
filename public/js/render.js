@@ -116,7 +116,12 @@ export function renderPipeline() {
       <td>${escapeHtml(item.role)}</td>
       <td>${escapeHtml(item.location || "-")}</td>
       <td>${escapeHtml(item.notes || "Ready for evaluation")}</td>
-      <td><div class="row-actions"><button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button></div></td>
+      <td>
+        <div class="row-actions">
+          <button data-open="${escapeHtml(item.id)}" ${item.url ? "" : "disabled"}>Open</button>
+          <button data-grade-pipeline-url="${escapeHtml(item.url || "")}" ${item.url ? "" : "disabled"}>Grade</button>
+        </div>
+      </td>
     </tr>
   `).join("") || '<tr><td colspan="5" class="empty-table-cell">No pending postings in the pipeline.</td></tr>';
 }

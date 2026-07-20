@@ -51,6 +51,17 @@ export async function runCommand(action) {
   }, 1500);
 }
 
+export async function gradePipelineJob(url) {
+  if (!url) return;
+  const job = await api("/api/pipeline/grade", {
+    method: "POST",
+    body: JSON.stringify({ url })
+  });
+  toast(`${job.label} started`);
+  showView("commands");
+  await renderJobs();
+}
+
 export async function openItem(item) {
   if (!item?.url) return;
   try {
