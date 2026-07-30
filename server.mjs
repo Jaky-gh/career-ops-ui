@@ -127,11 +127,19 @@ function normalizeCommand(command) {
   return [cmd === "node" ? process.execPath : cmd, args];
 }
 
+function resolveCodexCommand() {
+  if (process.env.CODEX_BIN) return process.env.CODEX_BIN;
+  const bundledCandidates = [
+    "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "/Applications/Codex.app/Contents/Resources/codex"
+  ];
+  return bundledCandidates.find((candidate) => existsSync(candidate)) || "codex";
+}
+
 const settings = await loadSettings();
 const PORT = Number(settings.port || 5177);
 const CAREER_OPS_ROOT = resolveFromProject(settings.careerOpsPath);
-const CODEX_COMMAND = process.env.CODEX_BIN
-  || (existsSync("/Applications/Codex.app/Contents/Resources/codex") ? "/Applications/Codex.app/Contents/Resources/codex" : "codex");
+const CODEX_COMMAND = resolveCodexCommand();
 const codexPipelinePrompt = [
   "Run career-ops pipeline mode for data/pipeline.md.",
   "Process pending URLs using the Career-Ops instructions in this repo.",
