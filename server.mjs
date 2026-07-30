@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
 const STATE_DIR = path.join(__dirname, ".career-ops-ui");
 const JOBS_STATE_FILE = path.join(STATE_DIR, "jobs.json");
+const SETTINGS_LOCAL_FILE = path.join(__dirname, "settings.local.json");
 
 const jobs = new Map();
 let nextJobId = 1;
@@ -94,7 +95,7 @@ async function loadSettings() {
   const configuredPaths = [
     process.env.CAREER_OPS_UI_SETTINGS,
     path.join(__dirname, "settings.json"),
-    path.join(__dirname, "settings.local.json")
+    SETTINGS_LOCAL_FILE
   ].filter(Boolean);
 
   let settings = DEFAULT_SETTINGS;
@@ -571,11 +572,58 @@ async function getData() {
 
 async function getHealth() {
   const required = settings.requiredFiles || [];
-  const missing = required.filter((rel) => !existsSync(path.join(CAREER_OPS_ROOT, ...rel.split("/"))));
+  const requiredFiles = required.map((rel) => ({
+    label: rel,
+    path: path.join(CAREER_OPS_ROOT, ...rel.split("/")),
+    exists: existsSync(path.join(CAREER_OPS_ROOT, ...rel.split("/")))
+  }));
+  const missing = requiredFiles.filter((file) => !file.exists).map((file) => file.label);
+  const dataBindings = [
+    {
+      area: "Applications",
+      file: "data/applications.md",
+      paths: ["data/applications.md"],
+      purpose: "Tracker history, statuses, scores, and applied dates"
+    },
+    {
+      area: "Pipeline",
+      file: "data/pipeline.md",
+      paths: ["data/pipeline.md"],
+      purpose: "Pending jobs to grade and processed pipeline rows"
+    },
+    {
+      area: "Reports",
+      file: "reports/",
+      paths: ["reports"],
+      purpose: "Per-job evaluation notes and report previews"
+    },
+    {
+      area: "Apply-Ready",
+      file: "data/applications.md + reports/",
+      paths: ["data/applications.md", "reports"],
+      purpose: "4.0+ tracked roles with linked evaluation reports"
+    },
+    {
+      area: "Commands",
+      file: "scan/grade/merge scripts",
+      paths: ["scan.mjs", "merge-tracker.mjs", "verify-pipeline.mjs"],
+      purpose: "scan, grade, merge, verify, liveness, and cleanup commands"
+    }
+  ].map((binding) => {
+    const absolutePaths = binding.paths.map((rel) => path.join(CAREER_OPS_ROOT, ...rel.split("/").filter(Boolean)));
+    return {
+      ...binding,
+      path: absolutePaths.join(" + "),
+      exists: absolutePaths.every((filePath) => existsSync(filePath))
+    };
+  });
   return {
     root: CAREER_OPS_ROOT,
     exists: existsSync(CAREER_OPS_ROOT),
     missing,
+    requiredFiles,
+    dataBindings,
+    codexCommand: CODEX_COMMAND,
     settings: {
       sources: settings.sources,
       careerOpsPath: settings.careerOpsPath,
@@ -588,6 +636,25 @@ async function getHealth() {
       when: action.when,
       effect: action.effect
     }]))
+  };
+}
+
+async function updateLocalCareerOpsPath(rawPath) {
+  const careerOpsPath = String(rawPath || "").trim();
+  if (!careerOpsPath) throw new Error("Enter a career-ops path.");
+  const resolvedPath = path.resolve(__dirname, careerOpsPath);
+  if (!existsSync(resolvedPath)) throw new Error(`Path does not exist: ${resolvedPath}`);
+
+  const existing = await loadJsonIfExists(SETTINGS_LOCAL_FILE) || {};
+  const next = {
+    ...existing,
+    careerOpsPath: resolvedPath
+  };
+  await fs.writeFile(SETTINGS_LOCAL_FILE, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return {
+    careerOpsPath: resolvedPath,
+    settingsFile: SETTINGS_LOCAL_FILE,
+    restartRequired: true
   };
 }
 
@@ -869,6 +936,11 @@ async function handleApi(req, res) {
         actionIds: Object.keys(ACTIONS),
         sources: settings.sources
       });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/settings/career-ops-path") {
+      const body = await readBody(req);
+      return sendJson(res, 200, await updateLocalCareerOpsPath(body.careerOpsPath));
     }
 
     if (req.method === "GET" && url.pathname.startsWith("/api/reports/")) {

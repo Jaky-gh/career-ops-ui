@@ -11,6 +11,7 @@ import {
   refreshAll,
   renderJobs,
   runCommand,
+  saveCareerOpsPath,
   showView,
   skipJob,
   tailorResume,
@@ -124,6 +125,10 @@ els.markAppliedButton.addEventListener("click", async () => {
 els.addUrlForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await addPipelineUrl(els.urlInput.value);
+});
+els.careerOpsPathForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveCareerOpsPath(els.careerOpsPathInput.value).catch((error) => toast(error.message));
 });
 
 refreshAll().catch((error) => toast(error.message));

@@ -32,6 +32,10 @@ CAREER_OPS_PATH=/path/to/career-ops node server.mjs
 
 Then open the URL printed by the server.
 
+You can also open the `Connection` page in the UI to see which `career-ops`
+checkout is attached, verify the required files, and save a new checkout path to
+`settings.local.json`. Restart the local server after changing the path.
+
 ## Settings
 
 `settings.json` configures:
@@ -49,6 +53,7 @@ Then open the URL printed by the server.
 - Shows new pipeline entries from `data/pipeline.md`
 - Filters by status, score, source, and text search
 - Runs local `career-ops` commands such as doctor, scan, verify, merge, dedup, and normalize
+- Shows how each UI area maps to `career-ops` files on the Connection page
 - Adds a URL to `data/pipeline.md`
 - Opens a job description URL from the application list
 

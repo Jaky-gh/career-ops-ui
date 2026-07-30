@@ -31,6 +31,7 @@
           <button class="nav-item" data-view="history">History</button>
           <button class="nav-item" data-view="pipeline">Pipeline</button>
           <button class="nav-item" data-view="commands">Commands</button>
+          <button class="nav-item" data-view="connection">Connection</button>
           <button class="nav-item" data-view="guide">Guide</button>
         </nav>
       </aside>
@@ -274,6 +275,57 @@
             </div>
             <div id="jobsList" class="jobs-list"></div>
           </section>
+        </section>
+
+        <section id="connectionView" class="view">
+          <div class="section-head">
+            <div>
+              <h2>Career-Ops Connection</h2>
+              <p>Review how this UI is attached to the local career-ops checkout.</p>
+            </div>
+            <button class="secondary-button command-button" data-action="doctor">Run Doctor</button>
+          </div>
+
+          <section class="connection-panel">
+            <div class="connection-summary">
+              <div>
+                <span id="connectionStatus" class="connection-status">Checking</span>
+                <h3 id="connectionRoot">Loading workspace</h3>
+                <p id="connectionSources"></p>
+              </div>
+              <dl class="connection-facts">
+                <div><dt>Configured path</dt><dd id="connectionConfiguredPath"></dd></div>
+                <div><dt>Codex command</dt><dd id="connectionCodexCommand"></dd></div>
+              </dl>
+            </div>
+
+            <form id="careerOpsPathForm" class="connection-form">
+              <label for="careerOpsPathInput">career-ops checkout path</label>
+              <div>
+                <input id="careerOpsPathInput" type="text" autocomplete="off" spellcheck="false">
+                <button class="primary-button" type="submit">Save Path</button>
+              </div>
+              <p id="connectionSaveNote">Path changes are saved to settings.local.json and take effect after restarting the local UI server.</p>
+            </form>
+          </section>
+
+          <div class="connection-grid">
+            <section class="connection-card">
+              <div class="history-head">
+                <strong>Required Files</strong>
+                <span id="requiredFilesCount" class="eyebrow">0 checked</span>
+              </div>
+              <div id="requiredFilesList" class="connection-list"></div>
+            </section>
+
+            <section class="connection-card">
+              <div class="history-head">
+                <strong>UI Data Bindings</strong>
+                <span class="eyebrow">career-ops files</span>
+              </div>
+              <div id="dataBindingsList" class="connection-list"></div>
+            </section>
+          </div>
         </section>
 
         <section id="guideView" class="view">

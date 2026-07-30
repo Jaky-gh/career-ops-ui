@@ -1083,6 +1083,141 @@ dd {
   font-size: 12px;
 }
 
+.connection-panel,
+.connection-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.connection-panel {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.connection-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  gap: 16px;
+  align-items: start;
+}
+
+.connection-summary h3 {
+  overflow-wrap: anywhere;
+  margin: 8px 0 6px;
+  font-size: 18px;
+}
+
+.connection-summary p,
+.connection-form p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.connection-status {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.connection-ok {
+  background: #ecf8ef;
+  color: var(--good);
+}
+
+.connection-missing {
+  background: #fff0f0;
+  color: var(--bad);
+}
+
+.connection-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.connection-facts div {
+  display: grid;
+  gap: 4px;
+}
+
+.connection-facts dt,
+.connection-form label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.connection-facts dd {
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 13px;
+}
+
+.connection-form {
+  display: grid;
+  gap: 8px;
+}
+
+.connection-form > div {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 10px;
+}
+
+.connection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.connection-card {
+  overflow: hidden;
+}
+
+.connection-list {
+  display: grid;
+  gap: 0;
+}
+
+.connection-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 10px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.connection-row strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.connection-row p {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.connection-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 999px;
+}
+
 .empty-state {
   padding: 32px;
   color: var(--muted);
@@ -1140,7 +1275,10 @@ dd {
   .workflow-grid,
   .workflow-stats,
   .status-board,
-  .add-url-form {
+  .add-url-form,
+  .connection-summary,
+  .connection-grid,
+  .connection-form > div {
     grid-template-columns: 1fr;
   }
 

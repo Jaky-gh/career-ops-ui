@@ -38,6 +38,46 @@ export function renderSummary() {
   els.averageScore.textContent = avg;
 }
 
+function connectionStateClass(ok) {
+  return ok ? "connection-ok" : "connection-missing";
+}
+
+export function renderConnection() {
+  if (!state.health) return;
+  const healthy = state.health.exists && !state.health.missing.length;
+  els.connectionStatus.textContent = healthy ? "Connected" : "Needs attention";
+  els.connectionStatus.className = `connection-status ${connectionStateClass(healthy)}`;
+  els.connectionRoot.textContent = state.health.root;
+  els.connectionSources.textContent = `Settings loaded from ${state.health.settings.sources.join(" + ")}`;
+  els.connectionConfiguredPath.textContent = state.health.settings.careerOpsPath || "-";
+  els.connectionCodexCommand.textContent = state.health.codexCommand || "-";
+  els.careerOpsPathInput.value = state.health.root || state.health.settings.careerOpsPath || "";
+
+  const requiredFiles = state.health.requiredFiles || [];
+  const presentCount = requiredFiles.filter((file) => file.exists).length;
+  els.requiredFilesCount.textContent = `${presentCount}/${requiredFiles.length} present`;
+  els.requiredFilesList.innerHTML = requiredFiles.map((file) => `
+    <article class="connection-row">
+      <span class="connection-dot ${connectionStateClass(file.exists)}"></span>
+      <div>
+        <strong>${escapeHtml(file.label)}</strong>
+        <p>${escapeHtml(file.path)}</p>
+      </div>
+    </article>
+  `).join("") || '<div class="empty-state">No required files configured.</div>';
+
+  els.dataBindingsList.innerHTML = (state.health.dataBindings || []).map((binding) => `
+    <article class="connection-row">
+      <span class="connection-dot ${connectionStateClass(binding.exists)}"></span>
+      <div>
+        <strong>${escapeHtml(binding.area)} -> ${escapeHtml(binding.file)}</strong>
+        <p>${escapeHtml(binding.purpose)}</p>
+        <p>${escapeHtml(binding.path)}</p>
+      </div>
+    </article>
+  `).join("") || '<div class="empty-state">No data bindings reported.</div>';
+}
+
 export function renderApplications() {
   const items = [...filteredItems()].sort((a, b) => {
     const dateDiff = dateSortValue(b.date) - dateSortValue(a.date);
@@ -369,6 +409,7 @@ export function closeLogModal() {
 export function render() {
   populateFilters();
   renderSummary();
+  renderConnection();
   renderWorkflow();
   renderApplications();
   renderHistory();

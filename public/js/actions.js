@@ -1,7 +1,7 @@
 import { api, toast } from "./api.js";
 import { els } from "./dom.js";
 import { state } from "./state.js";
-import { closeLogModal, render, renderJobsList, renderLogModal } from "./render.js";
+import { closeLogModal, render, renderConnection, renderJobsList, renderLogModal } from "./render.js";
 
 export async function renderJobs() {
   const { jobs } = await api("/api/jobs");
@@ -19,6 +19,7 @@ export async function loadHealth() {
   } else {
     els.healthStatus.textContent = "Ready to review applications";
   }
+  renderConnection();
 }
 
 export async function loadData() {
@@ -159,6 +160,15 @@ export async function viewLatestJobLog() {
 }
 
 export { closeLogModal };
+
+export async function saveCareerOpsPath(careerOpsPath) {
+  const result = await api("/api/settings/career-ops-path", {
+    method: "POST",
+    body: JSON.stringify({ careerOpsPath })
+  });
+  els.connectionSaveNote.textContent = `Saved to ${result.settingsFile}. Restart the local UI server to attach to ${result.careerOpsPath}.`;
+  toast("career-ops path saved; restart required");
+}
 
 export async function addPipelineUrl(url) {
   await api("/api/pipeline", {
