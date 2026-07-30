@@ -54,6 +54,7 @@ export const els = {
   connectionSources: document.querySelector("#connectionSources"),
   connectionConfiguredPath: document.querySelector("#connectionConfiguredPath"),
   connectionCodexCommand: document.querySelector("#connectionCodexCommand"),
+  openCareerOpsFolderButton: document.querySelector("#openCareerOpsFolderButton"),
   careerOpsPathForm: document.querySelector("#careerOpsPathForm"),
   careerOpsPathInput: document.querySelector("#careerOpsPathInput"),
   connectionSaveNote: document.querySelector("#connectionSaveNote"),
@@ -69,5 +70,12 @@ export const els = {
   logModalBody: document.querySelector("#logModalBody"),
   logModalCloseButton: document.querySelector("#logModalCloseButton"),
   logModalCopyButton: document.querySelector("#logModalCopyButton"),
+  fileModal: document.querySelector("#fileModal"),
+  fileModalTitle: document.querySelector("#fileModalTitle"),
+  fileModalStatus: document.querySelector("#fileModalStatus"),
+  fileModalMeta: document.querySelector("#fileModalMeta"),
+  fileModalBody: document.querySelector("#fileModalBody"),
+  fileModalCloseButton: document.querySelector("#fileModalCloseButton"),
+  fileModalCopyButton: document.querySelector("#fileModalCopyButton"),
   toast: document.querySelector("#toast")
 };

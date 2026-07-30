@@ -1,7 +1,7 @@
 import { api, toast } from "./api.js";
 import { els } from "./dom.js";
 import { state } from "./state.js";
-import { closeLogModal, render, renderConnection, renderJobsList, renderLogModal } from "./render.js";
+import { closeFileModal, closeLogModal, render, renderConnection, renderFileModal, renderJobsList, renderLogModal } from "./render.js";
 
 export async function renderJobs() {
   const { jobs } = await api("/api/jobs");
@@ -134,6 +134,11 @@ export async function copyJobLog(jobId) {
   toast("Command log copied");
 }
 
+export async function copyFilePreview() {
+  await copyText(els.fileModal.dataset.content || "");
+  toast("Preview copied");
+}
+
 export async function viewJobLog(jobId) {
   const { jobs } = await api("/api/jobs");
   const job = jobs.find((item) => item.id === jobId);
@@ -160,6 +165,7 @@ export async function viewLatestJobLog() {
 }
 
 export { closeLogModal };
+export { closeFileModal };
 
 export async function saveCareerOpsPath(careerOpsPath) {
   const result = await api("/api/settings/career-ops-path", {
@@ -168,6 +174,19 @@ export async function saveCareerOpsPath(careerOpsPath) {
   });
   els.connectionSaveNote.textContent = `Saved to ${result.settingsFile}. Restart the local UI server to attach to ${result.careerOpsPath}.`;
   toast("career-ops path saved; restart required");
+}
+
+export async function viewCareerOpsPath(pathValue) {
+  const entry = await api(`/api/career-ops/path?path=${encodeURIComponent(pathValue || ".")}`);
+  renderFileModal(entry);
+}
+
+export async function openCareerOpsFolder(pathValue = ".") {
+  await api("/api/career-ops/open-folder", {
+    method: "POST",
+    body: JSON.stringify({ path: pathValue || "." })
+  });
+  toast("career-ops folder opened");
 }
 
 export async function addPipelineUrl(url) {

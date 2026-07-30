@@ -1191,8 +1191,9 @@ dd {
 
 .connection-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr);
+  grid-template-columns: 12px minmax(0, 1fr) auto;
   gap: 10px;
+  align-items: start;
   padding: 13px 16px;
   border-top: 1px solid var(--line);
 }
@@ -1216,6 +1217,17 @@ dd {
   height: 10px;
   margin-top: 5px;
   border-radius: 999px;
+}
+
+.connection-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.connection-row-actions .secondary-button {
+  min-height: 34px;
 }
 
 .empty-state {
@@ -1317,6 +1329,15 @@ dd {
   .latest-log-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .connection-row {
+    grid-template-columns: 12px minmax(0, 1fr);
+  }
+
+  .connection-row-actions {
+    grid-column: 2;
+    justify-content: flex-start;
   }
 
   .latest-log-body {

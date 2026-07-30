@@ -42,6 +42,16 @@ function connectionStateClass(ok) {
   return ok ? "connection-ok" : "connection-missing";
 }
 
+function renderConnectionActions(pathValue, exists) {
+  const path = escapeHtml(pathValue || ".");
+  return `
+    <div class="connection-row-actions">
+      <button class="secondary-button" data-view-career-ops-path="${path}" ${exists ? "" : "disabled"}>View</button>
+      <button class="secondary-button" data-open-career-ops-folder="${path}" ${exists ? "" : "disabled"}>Open Folder</button>
+    </div>
+  `;
+}
+
 export function renderConnection() {
   if (!state.health) return;
   const healthy = state.health.exists && !state.health.missing.length;
@@ -63,6 +73,7 @@ export function renderConnection() {
         <strong>${escapeHtml(file.label)}</strong>
         <p>${escapeHtml(file.path)}</p>
       </div>
+      ${renderConnectionActions(file.label, file.exists)}
     </article>
   `).join("") || '<div class="empty-state">No required files configured.</div>';
 
@@ -74,6 +85,7 @@ export function renderConnection() {
         <p>${escapeHtml(binding.purpose)}</p>
         <p>${escapeHtml(binding.path)}</p>
       </div>
+      ${renderConnectionActions(binding.paths?.[0] || binding.file, binding.exists)}
     </article>
   `).join("") || '<div class="empty-state">No data bindings reported.</div>';
 }
@@ -404,6 +416,29 @@ export function closeLogModal() {
   els.logModal.classList.add("hidden");
   els.logModal.removeAttribute("data-job-id");
   els.logModalBody.textContent = "";
+}
+
+export function renderFileModal(entry) {
+  const isDirectory = entry.kind === "directory";
+  els.fileModalTitle.textContent = isDirectory ? "Folder Preview" : "File Preview";
+  els.fileModalStatus.innerHTML = `
+    <span class="job-status ${isDirectory ? "job-status-running" : "job-status-succeeded"}">
+      <span class="job-status-dot"></span>
+      ${isDirectory ? "directory" : "file"}
+    </span>
+  `;
+  els.fileModalMeta.textContent = entry.absolutePath || entry.path || "";
+  els.fileModalBody.textContent = isDirectory
+    ? (entry.entries || []).map((item) => `${item.type === "directory" ? "[dir] " : "      "}${item.path}`).join("\n") || "Folder is empty."
+    : entry.content || "";
+  els.fileModal.dataset.content = els.fileModalBody.textContent;
+  els.fileModal.classList.remove("hidden");
+}
+
+export function closeFileModal() {
+  els.fileModal.classList.add("hidden");
+  els.fileModalBody.textContent = "";
+  els.fileModal.removeAttribute("data-content");
 }
 
 export function render() {

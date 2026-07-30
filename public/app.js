@@ -1,12 +1,15 @@
 import { api, toast } from "./js/api.js";
 import {
   addPipelineUrl,
+  closeFileModal,
   closeLogModal,
+  copyFilePreview,
   copyLatestJobLog,
   copyOpenJobLog,
   copyJobLog,
   gradePipelineJob,
   markApplied,
+  openCareerOpsFolder,
   openItem,
   refreshAll,
   renderJobs,
@@ -15,6 +18,7 @@ import {
   showView,
   skipJob,
   tailorResume,
+  viewCareerOpsPath,
   viewLatestJobLog,
   viewJobLog
 } from "./js/actions.js";
@@ -63,6 +67,16 @@ document.addEventListener("click", async (event) => {
     closeLogModal();
   }
 
+  if (event.target.dataset.closeFileModal || event.target === els.fileModal) {
+    closeFileModal();
+  }
+
+  const viewCareerOpsPathValue = event.target.dataset.viewCareerOpsPath;
+  if (viewCareerOpsPathValue) viewCareerOpsPath(viewCareerOpsPathValue).catch((error) => toast(error.message));
+
+  const openCareerOpsFolderPath = event.target.dataset.openCareerOpsFolder;
+  if (openCareerOpsFolderPath) openCareerOpsFolder(openCareerOpsFolderPath).catch((error) => toast(error.message));
+
   if (event.target.dataset.showReady) {
     showView("applications");
     els.statusFilter.value = "all";
@@ -87,12 +101,18 @@ document.addEventListener("click", async (event) => {
 
 els.logModalCloseButton.addEventListener("click", closeLogModal);
 els.logModalCopyButton.addEventListener("click", () => copyOpenJobLog().catch((error) => toast(error.message)));
+els.fileModalCloseButton.addEventListener("click", closeFileModal);
+els.fileModalCopyButton.addEventListener("click", () => copyFilePreview().catch((error) => toast(error.message)));
 els.latestLogViewButton.addEventListener("click", () => viewLatestJobLog().catch((error) => toast(error.message)));
 els.latestLogCopyButton.addEventListener("click", () => copyLatestJobLog().catch((error) => toast(error.message)));
+els.openCareerOpsFolderButton.addEventListener("click", () => openCareerOpsFolder(".").catch((error) => toast(error.message)));
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !els.logModal.classList.contains("hidden")) {
     closeLogModal();
+  }
+  if (event.key === "Escape" && !els.fileModal.classList.contains("hidden")) {
+    closeFileModal();
   }
 });
 

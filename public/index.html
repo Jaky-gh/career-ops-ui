@@ -283,7 +283,10 @@
               <h2>Career-Ops Connection</h2>
               <p>Review how this UI is attached to the local career-ops checkout.</p>
             </div>
-            <button class="secondary-button command-button" data-action="doctor">Run Doctor</button>
+            <div class="button-row">
+              <button id="openCareerOpsFolderButton" class="secondary-button" type="button">Open Folder</button>
+              <button class="secondary-button command-button" data-action="doctor">Run Doctor</button>
+            </div>
           </div>
 
           <section class="connection-panel">
@@ -403,6 +406,24 @@
         <footer class="log-modal-footer">
           <button id="logModalCopyButton" class="primary-button" type="button">Copy Log</button>
           <button class="secondary-button" type="button" data-close-log-modal="true">Close</button>
+        </footer>
+      </section>
+    </div>
+
+    <div id="fileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="fileModalTitle">
+      <section class="log-modal">
+        <header class="log-modal-head">
+          <div>
+            <div id="fileModalStatus" class="log-modal-status"></div>
+            <h2 id="fileModalTitle">career-ops file</h2>
+            <p id="fileModalMeta" class="eyebrow"></p>
+          </div>
+          <button id="fileModalCloseButton" class="icon-button" type="button" aria-label="Close file preview">Close</button>
+        </header>
+        <pre id="fileModalBody" class="log-modal-body"></pre>
+        <footer class="log-modal-footer">
+          <button id="fileModalCopyButton" class="primary-button" type="button">Copy</button>
+          <button class="secondary-button" type="button" data-close-file-modal="true">Close</button>
         </footer>
       </section>
     </div>

@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { createReadStream, existsSync, promises as fs, readFileSync } from "node:fs";
+import { createReadStream, existsSync, promises as fs, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -189,6 +189,8 @@ const mimeTypes = {
   ".svg": "image/svg+xml"
 };
 
+const viewableExtensions = new Set([".md", ".txt", ".tsv", ".csv", ".json", ".yml", ".yaml", ".mjs", ".js"]);
+
 function sendJson(res, status, data) {
   const body = JSON.stringify(data);
   res.writeHead(status, {
@@ -231,6 +233,63 @@ function serializeJob(job) {
   return safeJob;
 }
 
+function resolveCareerOpsRelativePath(value = ".") {
+  const rel = String(value || ".").trim() || ".";
+  if (path.isAbsolute(rel)) throw new Error("Use a path relative to the career-ops checkout.");
+  const resolved = path.resolve(CAREER_OPS_ROOT, rel);
+  const rootWithSeparator = `${CAREER_OPS_ROOT}${path.sep}`;
+  if (resolved !== CAREER_OPS_ROOT && !resolved.startsWith(rootWithSeparator)) {
+    throw new Error("Path must stay inside the career-ops checkout.");
+  }
+  return { rel, resolved };
+}
+
+async function readCareerOpsPath(rel) {
+  const target = resolveCareerOpsRelativePath(rel);
+  let stat;
+  try {
+    stat = statSync(target.resolved);
+  } catch {
+    throw new Error(`Path not found: ${target.rel}`);
+  }
+
+  if (stat.isDirectory()) {
+    const entries = await fs.readdir(target.resolved, { withFileTypes: true });
+    const visibleEntries = entries
+      .filter((entry) => !entry.name.startsWith("."))
+      .sort((a, b) => Number(b.isDirectory()) - Number(a.isDirectory()) || a.name.localeCompare(b.name))
+      .slice(0, 200)
+      .map((entry) => {
+        const childRel = path.posix.join(target.rel === "." ? "" : target.rel.split(path.sep).join("/"), entry.name);
+        return {
+          name: entry.name,
+          type: entry.isDirectory() ? "directory" : "file",
+          path: childRel || entry.name
+        };
+      });
+    return {
+      kind: "directory",
+      path: target.rel,
+      absolutePath: target.resolved,
+      entries: visibleEntries
+    };
+  }
+
+  if (!stat.isFile()) throw new Error("Only files and directories can be viewed.");
+  if (!viewableExtensions.has(path.extname(target.resolved).toLowerCase())) {
+    throw new Error("This file type is not previewable in the app.");
+  }
+  if (stat.size > 1024 * 1024) throw new Error("File is larger than 1 MB; open it from the folder instead.");
+
+  return {
+    kind: "file",
+    path: target.rel,
+    absolutePath: target.resolved,
+    size: stat.size,
+    content: await fs.readFile(target.resolved, "utf8")
+  };
+}
+
 function hasFatalCommandOutput(job) {
   const logs = job.logs || "";
   const hasSavedReport = /Report saved:/i.test(logs);
@@ -244,7 +303,16 @@ function inferFinishedStatus(job, exitCode = job.exitCode) {
 }
 
 async function loadPersistedJobs() {
-  const saved = await loadJsonIfExists(JOBS_STATE_FILE);
+  let saved;
+  try {
+    saved = await loadJsonIfExists(JOBS_STATE_FILE);
+  } catch (error) {
+    const backupPath = `${JOBS_STATE_FILE}.corrupt-${Date.now()}.bak`;
+    await fs.mkdir(STATE_DIR, { recursive: true });
+    await fs.rename(JOBS_STATE_FILE, backupPath).catch(() => {});
+    console.warn(`Ignoring corrupt command history (${error.message}); backup: ${backupPath}`);
+    return;
+  }
   if (!saved?.jobs?.length) return;
 
   for (const savedJob of saved.jobs) {
@@ -904,6 +972,16 @@ function openUrl(url) {
   child.unref();
 }
 
+function openCareerOpsFolder(rel = ".") {
+  const target = resolveCareerOpsRelativePath(rel);
+  const stat = statSync(target.resolved);
+  const folderPath = stat.isDirectory() ? target.resolved : path.dirname(target.resolved);
+  const command = process.platform === "win32" ? "cmd" : process.platform === "darwin" ? "open" : "xdg-open";
+  const args = process.platform === "win32" ? ["/c", "start", "", folderPath] : [folderPath];
+  const child = spawn(command, args, { detached: true, stdio: "ignore" });
+  child.unref();
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, "http://localhost");
   const requested = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
@@ -941,6 +1019,16 @@ async function handleApi(req, res) {
     if (req.method === "POST" && url.pathname === "/api/settings/career-ops-path") {
       const body = await readBody(req);
       return sendJson(res, 200, await updateLocalCareerOpsPath(body.careerOpsPath));
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/career-ops/path") {
+      return sendJson(res, 200, await readCareerOpsPath(url.searchParams.get("path") || "."));
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/career-ops/open-folder") {
+      const body = await readBody(req);
+      openCareerOpsFolder(body.path || ".");
+      return sendJson(res, 200, { ok: true });
     }
 
     if (req.method === "GET" && url.pathname.startsWith("/api/reports/")) {
