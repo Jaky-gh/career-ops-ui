@@ -294,7 +294,16 @@ function hasFatalCommandOutput(job) {
   const logs = job.logs || "";
   const hasSavedReport = /Report saved:/i.test(logs);
   const providerBlocked = /API_KEY not found|Insufficient credits|All\s+\d+\s+active models failed/i.test(logs);
-  return job.action === "grade" && providerBlocked && !hasSavedReport;
+  if (job.action === "grade" && providerBlocked && !hasSavedReport) return true;
+
+  // scan.mjs completes the healthy targets even when individual providers fail,
+  // so its process exit code can still be zero. Do not present that partial
+  // coverage as a clean success in the UI.
+  if (job.action === "scan") {
+    return /(?:^|\n)Errors \(\d+\):|🚨 FIX NEEDED:|target\(s\) unreachable/i.test(logs);
+  }
+
+  return false;
 }
 
 function inferFinishedStatus(job, exitCode = job.exitCode) {
