@@ -516,6 +516,10 @@ function parsePipelineCheckboxes(markdown) {
 
 function countPipelineRows() {
   const markdown = readTextSyncIfExists(path.join(CAREER_OPS_ROOT, "data", "pipeline.md"));
+  return countPipelineRowsFromMarkdown(markdown);
+}
+
+function countPipelineRowsFromMarkdown(markdown) {
   return {
     pending: parsePipelineCheckboxes(markdown).length,
     total: [...markdown.matchAll(/^\s*-\s+\[[ xX!]\]\s+/gm)].length
@@ -539,6 +543,10 @@ function hasPipelineTaskRows(markdown) {
 
 async function parsePipeline() {
   const markdown = await readTextIfExists(path.join(CAREER_OPS_ROOT, "data", "pipeline.md"));
+  return parsePipelineMarkdown(markdown);
+}
+
+function parsePipelineMarkdown(markdown) {
   const checkboxRows = parsePipelineCheckboxes(markdown);
   if (checkboxRows.length > 0 || hasPipelineTaskRows(markdown)) return checkboxRows;
 
@@ -1110,18 +1118,36 @@ async function handleApi(req, res) {
   }
 }
 
-const server = createServer((req, res) => {
-  if (req.url.startsWith("/api/")) {
-    handleApi(req, res);
-  } else {
-    serveStatic(req, res);
-  }
-});
+export {
+  countPipelineRowsFromMarkdown,
+  extractReportFile,
+  extractUrl,
+  hasFatalCommandOutput,
+  inferFinishedStatus,
+  isDividerRow,
+  parseMarkdownTables,
+  parsePipelineCheckboxes,
+  parsePipelineMarkdown,
+  parseScore,
+  splitMarkdownRow,
+  stripMarkdownLinks,
+  updateJobProgressFromLog
+};
 
-await loadPersistedJobs();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const server = createServer((req, res) => {
+    if (req.url.startsWith("/api/")) {
+      handleApi(req, res);
+    } else {
+      serveStatic(req, res);
+    }
+  });
 
-server.listen(PORT, () => {
-  console.log(`Career-Ops Local UI: http://localhost:${PORT}`);
-  console.log(`career-ops root: ${CAREER_OPS_ROOT}`);
-  console.log(`settings: ${settings.sources.join(", ")}`);
-});
+  await loadPersistedJobs();
+
+  server.listen(PORT, () => {
+    console.log(`Career-Ops Local UI: http://localhost:${PORT}`);
+    console.log(`career-ops root: ${CAREER_OPS_ROOT}`);
+    console.log(`settings: ${settings.sources.join(", ")}`);
+  });
+}

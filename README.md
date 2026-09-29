@@ -32,6 +32,18 @@ CAREER_OPS_PATH=/path/to/career-ops node server.mjs
 
 Then open the URL printed by the server.
 
+## Test
+
+```bash
+npm test
+```
+
+For a syntax check plus the unit tests:
+
+```bash
+npm run check
+```
+
 You can also open the `Connection` page in the UI to see which `career-ops`
 checkout is attached, verify the required files, and save a new checkout path to
 `settings.local.json`. Restart the local server after changing the path.
